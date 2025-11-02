@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1761974338141,
+      "tag": "0000_watery_redwing",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762049067674,
+      "tag": "0001_plain_microbe",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762049221171,
+      "tag": "0002_complex_ravenous",
+      "breakpoints": true
+    }
+  ]
+}

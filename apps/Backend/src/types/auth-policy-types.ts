@@ -1,0 +1,1 @@
+export type AuthPolicy = 'ADMIN' | 'USER' | 'AUTHORIZED' | 'PUBLIC';
