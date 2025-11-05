@@ -54,7 +54,8 @@ classDiagram
     Question"1" <--"*" Comment : has many
     Question"*" <-- "1" QuestionData : through
     Category"1" --> "*" Question : has many
-    Answer "*" --> "1" QuestionData : has many
+    Result "1" --> "*" QuestionData : has many
+    Answer "1" --> "*" QuestionData : has many
 
     class Category {
         - id : string [PK]
@@ -64,22 +65,28 @@ classDiagram
     class Question {
         - id : string [PK]
         - xlsxId : string
-        - question : string
+        - value : string
         - categoryId : string [FK]
         + getAll(...params)
         + getById(...params)
         + load(xlsxPath : string)
     }
 
+    class Answer {
+        - id : string [PK]
+        - value : string
+    }
+
     class QuestionData {
         - id : string [PK]
         - answerId : string [FK]
         - questionId : string [FK]
+        - resultId : string [FK]
         - segmentValueId : string [FK]
     }
 
     Segment"1" <-- "*" SegmentValue : belongs to
-    SegmentValue <-- QuestionData : belongs to
+    SegmentValue <-- QuestionData : has many
 
     class Segment {
         - id : string [PK]
@@ -92,15 +99,15 @@ classDiagram
         - segmentId : string [FK]
     }
 
-    class Answer {
+    class Result {
         - id : string [PK]
-        - answer : float
+        - value : float
     }
 
     class Comment {
         - id : string [PK]
         - userId : string [FK]
-        - recordId : string [FK]
+        - questionId : string [FK]
         - msgContent : string
         - createdAt : Date
         + send()

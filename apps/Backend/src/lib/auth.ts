@@ -8,7 +8,7 @@ import db, { users, verifications, accounts, sessions } from "@/db/schema";
 
 export const auth = betterAuth({
   appName: 'Jalisco Como Vamos',
-  trustedOrigins: ["exp://10.0.1.3:8081"],
+  trustedOrigins: ["*"],
   database: drizzleAdapter(db, {
     provider: "pg",
     usePlural: true,
@@ -27,6 +27,11 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+  },
+  user: {
+    changeEmail: {
+      enabled: true,
+    }
   },
   socialProviders: {
     google: {
