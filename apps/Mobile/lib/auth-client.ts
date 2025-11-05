@@ -4,7 +4,10 @@ import { expoClient } from "@better-auth/expo/client";
 import * as SecureStore from "expo-secure-store";
 
 export const authClient = createAuthClient({
-    baseURL: 'http://10.0.1.3:4040',
+    baseURL: process.env.EXPO_PUBLIC_API_URL,
+    fetchOptions: {
+        timeout: 10000,
+    },
     plugins: [
         expoClient({
             scheme: "jaliscocomovamosapp",
