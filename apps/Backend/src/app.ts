@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import '@/lib/register-webcrypto';
 
 import { toNodeHandler } from 'better-auth/node';
 import cors from 'cors';
