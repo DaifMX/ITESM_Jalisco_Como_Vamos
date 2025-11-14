@@ -6,9 +6,11 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
 import db, { users, verifications, accounts, sessions } from "@/db/schema";
 
+import getTrustedOrigins from "@/utils/getTrustedOrigins";
+
 export const auth = betterAuth({
   appName: 'Jalisco Como Vamos',
-  trustedOrigins: ["*"],
+  trustedOrigins: getTrustedOrigins() ?? [],
   database: drizzleAdapter(db, {
     provider: "pg",
     usePlural: true,
