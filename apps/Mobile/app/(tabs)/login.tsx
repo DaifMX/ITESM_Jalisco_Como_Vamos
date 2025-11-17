@@ -1,17 +1,21 @@
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { authClient } from '@/lib/auth-client';
 
+import ErrorDialog from '@/components/error-dialog';
+import LoadingDialog from '@/components/loading-dialog';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
+
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
 import { Divider } from '@/components/ui/divider';
 
 import { UserIcon } from 'lucide-react-native';
+import { LoginButton } from '@/components/login-btn';
 
 const GoogleIcon = () => (
   <Image
@@ -22,26 +26,88 @@ const GoogleIcon = () => (
 
 export default function HomeScreen() {
   const router = useRouter();
-  
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [error, setError] = useState('');
+  const [isErrorDiagOpen, setIsErrorDiagOpen] = useState(false);
+
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const [isLoginBtnDisabled, setIsLoginBtnDisabled] = useState(false);
 
   useEffect(() => {
-    console.log({ email, password });
+    if (email === '' || password === '') setIsLoginBtnDisabled(true);
+    else setIsLoginBtnDisabled(false);
   }, [email, password])
 
-  const handleLogin = async () => {
-    const payload = {
-      email,
-      password
-    }
-    console.log(payload)
-    const res = await authClient.signIn.email(payload);
+  const handleLoginEmailPassword = async () => {
+    try {
+      await authClient.signIn.email(
+        { email, password },
+        {
+          onRequest: () => {
+            setIsLoading(true);
+          },
+          onResponse: () => {
+            setIsLoading(false);
+          },
+          onSuccess: () => {
+            router.push('/home');
+          },
+          onError: (ctx) => {
+            console.log(ctx.error.message);
+            setError(ctx.error.message);
+            setIsErrorDiagOpen(true)
+          }
+        }
+      );
+    } catch (err: any) {
+      console.log(err)
+      setError(err.message ?? 'Error desconocido.');
+      setIsErrorDiagOpen(true);
 
-    console.log(res);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLoginGoogle = async () => {
+    try {
+      await authClient.signIn.social(
+        {
+          provider: 'google',
+          callbackURL: "/home"
+        },
+        {
+          onRequest: () => {
+            setIsLoading(true);
+          },
+          onResponse: () => {
+            setIsLoading(false);
+          },
+          onSuccess: () => {
+            router.push('/home');
+          },
+          onError: (ctx) => {
+            console.log(ctx.error)
+            setError(ctx.error.message);
+            setIsErrorDiagOpen(true)
+          }
+        }
+      );
+    } catch (err: any) {
+      console.log(err)
+      setError(err.message ?? 'Error desconocido.');
+      setIsErrorDiagOpen(true);
+
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -53,6 +119,10 @@ export default function HomeScreen() {
           style={styles.header}
         />
       }>
+
+      <LoadingDialog isOpen={isLoading} />
+      <ErrorDialog isOpen={isErrorDiagOpen} cause={error} handleClose={() => setIsErrorDiagOpen(false)} />
+
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Iniciar sesión</ThemedText>
       </ThemedView>
@@ -95,9 +165,7 @@ export default function HomeScreen() {
       </ThemedView>
 
       <ThemedView style={styles.stepContainer}>
-        <Button onPress={handleLogin} style={styles.loginBtn}>
-          <ButtonText className='text-black text-lg'>Iniciar sesión</ButtonText>
-        </Button>
+        <LoginButton handleLogin={handleLoginEmailPassword} isLoginBtnDisabled={isLoginBtnDisabled} styles={styles.loginBtn} />
         <Pressable onPress={() => router.push('/register')}>
           <View className='flex flex-row justify-center'>
             <ThemedText style={{ fontSize: 14 }} type="default">¿No tienes cuenta?</ThemedText>
@@ -110,11 +178,11 @@ export default function HomeScreen() {
           <Divider className='bg-black my-1 w-40 h-0.5 mx-2' />
         </View>
 
-        <Button style={styles.inviteBtn}>
+        <Button onPress={handleLoginGoogle} style={styles.inviteBtn}>
           <ButtonIcon as={GoogleIcon} className='w-5 h-5 mr-2' />
           <ButtonText className='color-black'>Iniciar sesión con Google</ButtonText>
         </Button>
-        <Button style={styles.inviteBtn}>
+        <Button onPress={() => router.push('/home')} style={styles.inviteBtn}>
           <ButtonIcon as={UserIcon} className='w-5 h-5 mr-2 color-black' />
           <ButtonText className='color-black'>Entrar como invitado</ButtonText>
         </Button>
