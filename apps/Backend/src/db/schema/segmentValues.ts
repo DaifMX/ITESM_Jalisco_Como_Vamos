@@ -6,7 +6,7 @@ import { segments, questionData } from '@/db/schema';
 export const segmentValues = pgTable('segmentValues', {
     id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
     name: text('name').unique().notNull(),
-    segmentId: uuid('segmentId').notNull(),
+    segmentId: uuid('segmentId').notNull().references(() => segments.id),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt")
         .defaultNow()

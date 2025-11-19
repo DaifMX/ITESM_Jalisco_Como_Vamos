@@ -6,9 +6,9 @@ import { categories, questionData } from '@/db/schema';
 
 export const questions = pgTable('questions', {
     id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    xlsxCode: text('xlsxCode').unique(),
-    value: text('value'),
-    categoryId: uuid('categoryId')
+    xlsxCode: text('xlsxCode').notNull().unique(),
+    value: text('value').notNull(),
+    categoryId: uuid('categoryId').notNull().references(() => categories.id)
 });
 
 export const questionRelations = relations(questions, ({ one, many }) => ({
