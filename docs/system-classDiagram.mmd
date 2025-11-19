@@ -54,7 +54,6 @@ classDiagram
     Question"1" <--"*" Comment : has many
     Question"*" <-- "1" QuestionData : through
     Category"1" --> "*" Question : has many
-    Result "1" --> "*" QuestionData : has many
     Answer "1" --> "*" QuestionData : has many
 
     class Category {
@@ -81,7 +80,7 @@ classDiagram
         - id : string [PK]
         - answerId : string [FK]
         - questionId : string [FK]
-        - resultId : string [FK]
+        - result : float
         - segmentValueId : string [FK]
     }
 
