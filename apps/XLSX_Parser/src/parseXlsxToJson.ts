@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url';
 import ExcelJS from 'exceljs';
 
 import { resolveQRC, QRC } from './functions/resolveQRC';
-import { randomUUID } from 'crypto';
 
 import { categoryMap } from './mappers/categoryMap';
 import { segmentValueMap } from './mappers/segmentValueMap';

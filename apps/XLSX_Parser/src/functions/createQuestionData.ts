@@ -11,7 +11,7 @@ export async function createQuestionData(questionData: any[]) {
 
     for (const data of questionData) {
         try {
-            await axios.post(API_URL, data);
+            await axios.post(`${API_URL}/question/push`, data);
             successCount++;
             process.stdout.write(`\rProgress: ${successCount + errorCount}/${questionData.length} (Success: ${successCount}, Errors: ${errorCount})`);
         } catch (error: any) {

@@ -1,9 +1,12 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# XLSX_Parser
+*.xlsx
+json/
+mappers/
 # dependencies
 node_modules/
 *.env
-
 # Expo
 .expo/
 dist/

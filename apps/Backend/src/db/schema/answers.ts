@@ -1,5 +1,6 @@
 import { pgTable, text, uuid } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm";
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { questionData } from "@/db/schema";
 
@@ -11,3 +12,7 @@ export const answers = pgTable('answers', {
 export const answerRelations = relations(answers, ({ many }) => ({
     questionData: many(questionData),
 }));
+
+export const answerSelectSchema = createSelectSchema(answers);
+
+export const answerInsertSchema = createInsertSchema(answers);

@@ -11,7 +11,7 @@ export async function createAnswers(answers: any[]) {
 
     for (const answer of answers) {
         try {
-            await axios.post(API_URL, answer);
+            await axios.post(`${API_URL}/answer`, answer);
             successCount++;
             process.stdout.write(`\rProgress: ${successCount + errorCount}/${answers.length} (Success: ${successCount}, Errors: ${errorCount})`);
         } catch (error: any) {
