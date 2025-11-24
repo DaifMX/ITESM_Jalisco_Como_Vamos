@@ -1,10 +1,12 @@
 import { betterAuth } from "better-auth";
+
 import { admin } from "better-auth/plugins";
 import { expo } from "@better-auth/expo";
+import { passkey } from "better-auth/plugins/passkey";
 
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-import db, { users, verifications, accounts, sessions } from "@/db/schema";
+import db, { accounts, users, verifications, sessions } from "@/db/schema";
 
 import getTrustedOrigins from "@/utils/getTrustedOrigins";
 
@@ -25,6 +27,7 @@ export const auth = betterAuth({
   plugins: [
     admin() as any,
     expo(),
+    passkey() as any,
   ],
   emailAndPassword: {
     enabled: true,
@@ -41,4 +44,4 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!
     }
   },
-}); 
+});
