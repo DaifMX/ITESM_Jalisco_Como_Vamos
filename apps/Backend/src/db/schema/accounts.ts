@@ -1,6 +1,7 @@
 import { pgTable, timestamp, text } from "drizzle-orm/pg-core";
 
 import { users } from "@/db/schema";
+import { relations } from "drizzle-orm";
 
 export const accounts = pgTable("accounts", {
     id: text("id").primaryKey(),
@@ -21,3 +22,10 @@ export const accounts = pgTable("accounts", {
         .$onUpdate(() => /* @__PURE__ */ new Date())
         .notNull(),
 });
+
+export const accountRelations = relations(accounts, ({ one }) => ({
+  users: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
+}));

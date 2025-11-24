@@ -1,10 +1,12 @@
 import { betterAuth } from "better-auth";
+
 import { admin } from "better-auth/plugins";
 import { expo } from "@better-auth/expo";
+import { passkey } from "@better-auth/passkey";
 
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-import db, { users, verifications, accounts, sessions } from "@/db/schema";
+import db, { accounts, users, verifications, sessions, passkeys } from "@/db/schema";
 
 import getTrustedOrigins from "@/utils/getTrustedOrigins";
 
@@ -19,12 +21,18 @@ export const auth = betterAuth({
       accounts,
       sessions,
       verifications,
-      users
+      users,
+      passkeys,
     },
   }),
   plugins: [
     admin() as any,
     expo(),
+    passkey({
+      rpName: 'Jalisco Como Vamos',
+      rpID: 'jcv-api.daifo.net',
+      origin: 'https://jcv-api.daifo.net',
+    }) as any,
   ],
   emailAndPassword: {
     enabled: true,
@@ -41,4 +49,4 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!
     }
   },
-}); 
+});

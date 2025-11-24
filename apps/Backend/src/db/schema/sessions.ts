@@ -1,6 +1,7 @@
 import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
 
 import { users } from "@/db/schema";
+import { relations } from "drizzle-orm";
 
 export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
@@ -17,3 +18,10 @@ export const sessions = pgTable("sessions", {
     .references(() => users.id, { onDelete: "cascade" }),
   impersonatedBy: text("impersonatedBy"),
 });
+
+export const sessionRelations = relations(sessions, ({ one }) => ({
+  users: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
