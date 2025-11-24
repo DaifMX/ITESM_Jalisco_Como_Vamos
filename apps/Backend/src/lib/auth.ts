@@ -6,7 +6,7 @@ import { passkey } from "better-auth/plugins/passkey";
 
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-import db, { accounts, users, verifications, sessions } from "@/db/schema";
+import db, { accounts, users, verifications, sessions, passkeys } from "@/db/schema";
 
 import getTrustedOrigins from "@/utils/getTrustedOrigins";
 
@@ -21,7 +21,8 @@ export const auth = betterAuth({
       accounts,
       sessions,
       verifications,
-      users
+      users,
+      passkeys,
     },
   }),
   plugins: [
