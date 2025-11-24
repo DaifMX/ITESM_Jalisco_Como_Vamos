@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 
 import { admin } from "better-auth/plugins";
 import { expo } from "@better-auth/expo";
-import { passkey } from "better-auth/plugins/passkey";
+import { passkey } from "@better-auth/passkey";
 
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
@@ -28,7 +28,11 @@ export const auth = betterAuth({
   plugins: [
     admin() as any,
     expo(),
-    passkey() as any,
+    passkey({
+      rpName: 'Jalisco Como Vamos',
+      rpID: 'jcv-api.daifo.net',
+      origin: 'https://jcv-api.daifo.net',
+    }) as any,
   ],
   emailAndPassword: {
     enabled: true,
