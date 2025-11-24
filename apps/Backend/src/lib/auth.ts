@@ -12,6 +12,7 @@ import getTrustedOrigins from "@/utils/getTrustedOrigins";
 
 export const auth = betterAuth({
   appName: 'Jalisco Como Vamos',
+  baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: getTrustedOrigins() ?? [],
   database: drizzleAdapter(db, {
     provider: "pg",

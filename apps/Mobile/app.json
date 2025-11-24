@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Jalisco-Como-Vamos-App"
+      "bundleIdentifier": "com.anonymous.Jalisco-Como-Vamos-App",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Face ID sera utilizado para iniciar sesión"
+      }
     },
     "android": {
       "adaptiveIcon": {

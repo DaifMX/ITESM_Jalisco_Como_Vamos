@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { authClient } from '@/lib/auth-client';
+import { hasPasskeyStored, loginBiometric } from '@/lib/biometrics';
 
 import ErrorDialog from '@/components/error-dialog';
 import LoadingDialog from '@/components/loading-dialog';
@@ -60,7 +61,7 @@ export default function HomeScreen() {
           onSuccess: () => {
             router.push('/home');
           },
-          onError: (ctx) => {
+          onError: (ctx: any) => {
             console.log(ctx.error.message);
             setError(ctx.error.message);
             setIsErrorDiagOpen(true)
@@ -93,7 +94,7 @@ export default function HomeScreen() {
           onSuccess: () => {
             router.push('/home');
           },
-          onError: (ctx) => {
+          onError: (ctx: any) => {
             console.log(ctx.error)
             setError(ctx.error.message);
             setIsErrorDiagOpen(true)
