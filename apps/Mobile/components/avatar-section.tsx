@@ -22,12 +22,12 @@ type AvatarProps = {
     handleSignOut: () => void,
 };
 
-const AvatarSection = ({
+export const AvatarSection = ({
     user,
     handleMyAccount,
     handleSettings,
     handleSignIn,
-    handleSignOut, 
+    handleSignOut,
 }: AvatarProps
 ) => {
     return (
@@ -78,5 +78,3 @@ const AvatarSection = ({
         </View>
     );
 };
-
-export default AvatarSection;

@@ -1,29 +1,37 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack } from "expo-router";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import "react-native-reanimated";
 
-import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
-import '@/global.css';
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import "@/global.css";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <GluestackUIProvider mode="light">
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-    </GluestackUIProvider>
-  
+    <SafeAreaView className="flex-1 bg-white" edges={["top", "right", "left", "bottom"]}>
+      <GluestackUIProvider mode="light">
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="home" options={{ title: "Inicio" }} />
+            <Stack.Screen name="question" options={{ title: "Preguntas" }} />
+            <Stack.Screen name="questionData" options={{ title: "Datos de pregunta" }} />
+            <Stack.Screen name="my-account" options={{ title: "Mi Cuenta" }} />
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="register" options={{ headerShown: false }} />.
+          </Stack>
+        </ThemeProvider>
+      </GluestackUIProvider>
+    </SafeAreaView>
   );
 }

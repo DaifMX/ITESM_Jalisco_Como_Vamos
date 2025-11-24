@@ -10,4 +10,6 @@ const axiosInstance = axios.create({
   }
 });
 
+export const fetcher = (url: string) => axiosInstance.get(url).then(res => res.data.payload);
+
 export default axiosInstance;

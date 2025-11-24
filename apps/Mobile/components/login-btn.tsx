@@ -37,7 +37,7 @@ export function LoginButton({ handleLogin, isLoginBtnDisabled, styles }: { handl
       style={styles}
       isDisabled={isLoginBtnDisabled}
     >
-      <ButtonText className="text-black text-lg">
+      <ButtonText className="text-[#F5F5F5] text-lg">
         Iniciar sesión
       </ButtonText>
     </AnimatedButton>

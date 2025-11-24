@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { ScrollView, Pressable, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { authClient } from "@/lib/auth-client";
 
-import AvatarSection from "@/components/avatar-section";
+import { AvatarSection } from "@/components/avatar-section";
+import { Footer } from "@/components/footer";
 
-import { Box } from "@/components/ui/box";
 import { Badge, BadgeIcon, BadgeText } from "@/components/ui/badge";
 import { Divider } from "@/components/ui/divider";
 import { HStack } from "@/components/ui/hstack";
@@ -16,11 +15,12 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { VStack } from "@/components/ui/vstack";
 
-import { SearchIcon, GuitarIcon, SpeechIcon, CrossIcon, CarIcon, LucideIcon } from "lucide-react-native";
+import { ArrowLeftIcon, SearchIcon, GuitarIcon, SpeechIcon, CrossIcon, CarIcon, LucideIcon } from "lucide-react-native";
+import { BasicElementCard } from "@/components/basic-elem-card";
 
 export type Session = typeof authClient.$Infer.Session;
 
-export default function Home() {
+export default function Question() {
     const router = useRouter();
 
     const session = authClient.useSession();
@@ -29,10 +29,10 @@ export default function Home() {
     const [searchBarVal, setSearchBarVal] = useState("");
 
     const [categories, setCategories] = useState([
-        { id: 0, text: 'Salud', icon: CrossIcon, color: '#EF4444', bgColor: '#FEE2E2' },
-        { id: 1, text: 'Relaciones Interpersonales', icon: SpeechIcon, color: '#8B5CF6', bgColor: '#EDE9FE' },
-        { id: 2, text: 'Cultura y recreación', icon: GuitarIcon, color: '#F59E0B', bgColor: '#FEF3C7' },
-        { id: 3, text: 'Movilidad', icon: CarIcon, color: '#3B82F6', bgColor: '#DBEAFE' },
+        { id: 0, text: 'Salud', icon: CrossIcon, color: '#FFFFFF', bgColor: 'rgb(0, 61, 165)' },
+        { id: 1, text: 'Relaciones interpersonales', icon: SpeechIcon, color: '#FFFFFF', bgColor: 'rgb(243, 112, 33)' },
+        { id: 2, text: 'Cultura y recreación', icon: GuitarIcon, color: '#FFFFFF', bgColor: 'rgb(196, 214, 0)' },
+        { id: 3, text: 'Movilidad', icon: CarIcon, color: '#FFFFFF', bgColor: 'rgb(228, 0, 43)' },
     ]);
 
     const [questions, setQuestions] = useState([
@@ -50,20 +50,32 @@ export default function Home() {
         { id: 11, text: "¿Cuál es su actividad diaria principal?", categoryId: 3 },
     ]);
 
+    const COLORS: string[] = [
+        "rgb(0, 61, 165)",      // pantone-dark-blue
+        "rgb(243, 112, 33)",    // pantone-orange
+        "rgb(196, 214, 0)",     // pantone-green
+        "rgb(228, 0, 43)",      // pantone-red
+        "rgb(254, 221, 0)",     // pantone-yellow
+        "rgb(153, 179, 214)",   // pantone-light-blue
+    ];
+
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <>
             <ScrollView
-                className="flex-1"
+                className="flex-1 bg-white"
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ padding: 32 }}
             >
                 <View className="flex flex-col gap-8">
                     <View className="flex flex-row justify-between">
-                        <ThemedText type="title">Inicio</ThemedText>
+                        <Pressable onPress={() => router.back()}>
+                            <ArrowLeftIcon size={40} />
+                        </Pressable>
+                        <ThemedText type="title">Preguntas</ThemedText>
                         <AvatarSection
                             user={session.data?.user}
                             handleMyAccount={() => router.push('/my-account')}
-                            handleSettings={() => router.push('/settings')}
+                            handleSettings={() => router.push('/my-account')}
                             handleSignIn={() => router.push('/login')}
                             handleSignOut={() => { authClient.signOut(); router.push('/login') }}
                         />
@@ -116,8 +128,9 @@ export default function Home() {
                     <VStack space="md">
                         {questions.map((q) => {
                             return (
-                                <QuestionCard
+                                <BasicElementCard
                                     key={q.id}
+                                    onPress={() => router.push('/questionData')}
                                     text={q.text}
                                 />
                             );
@@ -125,21 +138,10 @@ export default function Home() {
                     </VStack>
                 </View>
             </ScrollView>
-        </SafeAreaView>
+            <Footer />
+        </>
     );
 }
-
-const QuestionCard = ({ text }: { text: string }) => {
-    return (
-        <Pressable className="w-full">
-            <Box className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 justify-center">
-                <ThemedText className="text-base font-semibold text-[#111827]">
-                    {text}
-                </ThemedText>
-            </Box>
-        </Pressable>
-    );
-};
 
 const CategoryCard = ({ bgColor, color, icon, text }: { bgColor: string, color: string, icon: LucideIcon, text: string }) => {
     return (
