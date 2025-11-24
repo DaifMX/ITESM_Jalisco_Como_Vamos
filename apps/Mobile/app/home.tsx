@@ -8,7 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { fetcher } from "@/lib/axios";
 
 import { AvatarSection } from "@/components/avatar-section";
-import { BasicElementCard } from "@/components/basic-elem-card";
+
 import { Footer } from "@/components/footer";
 
 import { Input, InputSlot, InputIcon, InputField } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import { ThemedView } from "@/components/themed-view";
 import { VStack } from "@/components/ui/vstack";
 
 import { SearchIcon } from "lucide-react-native";
+import { HomeElementCard } from "@/components/home-element-card";
 
 export type Session = typeof authClient.$Infer.Session;
 
@@ -88,7 +89,7 @@ const CategoryList = () => {
     return (
         data?.map((c: any) => {
             return (
-                <BasicElementCard
+                <HomeElementCard
                     key={c.id}
                     onPress={() => router.push('/questions')}
                     text={c.name}
