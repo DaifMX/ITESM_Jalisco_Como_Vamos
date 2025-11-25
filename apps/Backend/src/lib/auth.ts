@@ -5,7 +5,7 @@ import { expo } from "@better-auth/expo";
 
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-import db, { accounts, users, verifications, sessions } from "@/db/schema";
+import db, { accounts, users, verifications, sessions, twoFactors } from "@/db/schema";
 
 import getTrustedOrigins from "@/utils/getTrustedOrigins";
 
@@ -22,6 +22,7 @@ export const auth = betterAuth({
       sessions,
       verifications,
       users,
+      twoFactors,
     },
   }),
   plugins: [
