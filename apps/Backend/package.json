@@ -17,7 +17,6 @@
   "packageManager": "pnpm@10.18.2",
   "dependencies": {
     "@better-auth/expo": "1.4.1",
-    "@better-auth/passkey": "1.4.1",
     "better-auth": "1.4.1",
     "cors": "2.8.5",
     "dotenv": "17.2.3",

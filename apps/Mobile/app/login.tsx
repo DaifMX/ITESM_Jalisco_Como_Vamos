@@ -4,7 +4,6 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { authClient } from '@/lib/auth-client';
-import { hasPasskeyStored, loginBiometric } from '@/lib/biometrics';
 
 import ErrorDialog from '@/components/error-dialog';
 import LoadingDialog from '@/components/loading-dialog';

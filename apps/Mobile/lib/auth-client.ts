@@ -1,7 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 
 import { expoClient } from "@better-auth/expo/client";
-import { passkeyClient } from "@better-auth/passkey/client";
+import { twoFactorClient } from "better-auth/client/plugins";
 
 import * as SecureStore from "expo-secure-store";
 
@@ -16,6 +16,6 @@ export const authClient = createAuthClient({
             storagePrefix: "jcv",
             storage: SecureStore,
         }),
-        passkeyClient()
+        twoFactorClient(),
     ],
 });

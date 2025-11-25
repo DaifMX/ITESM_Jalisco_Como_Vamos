@@ -50,3 +50,4 @@ app-example
 
 # editor
 .vscode
+.idea/
