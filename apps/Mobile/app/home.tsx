@@ -93,6 +93,10 @@ const CategoryList = () => {
                     key={c.id}
                     onPress={() => router.push('/questions')}
                     text={c.name}
+                    bgColor="white"
+                    color="red"
+                    icon="Angry"
+
                 />
             );
         })
