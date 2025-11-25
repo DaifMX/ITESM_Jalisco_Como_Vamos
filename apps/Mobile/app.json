@@ -12,6 +12,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.Jalisco-Como-Vamos-App",
       "infoPlist": {
+        "MinimumOSVersion": "14.0",
         "NSFaceIDUsageDescription": "Face ID sera utilizado para iniciar sesión"
       }
     },
