@@ -15,7 +15,7 @@ export const HomeElementCard = ({
   text: string;
   bgColor: string;
   color: string;
-  icon: string;
+  icon: keyof typeof icons;
   onPress: any;
 }) => {
   return (
@@ -25,7 +25,7 @@ export const HomeElementCard = ({
         style={{ height: 70, backgroundColor: bgColor }}
       >
         <Box className="mt-px">
-          <Icon name="Angry" color="red" size={20} />
+          <Icon name={icon} color={color} size={20} />
         </Box>
         <ThemedText className="text-base font-semibold text-[#111827]  ">
           {text}
