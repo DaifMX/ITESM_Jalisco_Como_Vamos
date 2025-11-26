@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-// import { rbacMiddleware } from '@/middleware/rbac_middleware';
+import { rbacMiddleware } from '@/middlewares/rbac-middleware';
 
 import { InternalError } from '@jcv/errors';
 
@@ -25,28 +25,23 @@ export default abstract class BaseRouter {
     //     ROUTER METHODS      //
     //=========================//
     public get(path: string, policies: AuthPolicy[], ...callbacks: RequestHandler[]): void {
-        // if (this.validatePolicies(policies, path)) this.router.get(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
-        if (this.validatePolicies(policies, path)) this.router.get(path, this.generateCustomResponses, callbacks);
+        if (this.validatePolicies(policies, path)) this.router.get(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
     };
 
     public patch(path: string, policies: AuthPolicy[], ...callbacks: RequestHandler[]): void {
-        // if (this.validatePolicies(policies, path)) this.router.patch(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
-        if (this.validatePolicies(policies, path)) this.router.patch(path, this.generateCustomResponses, callbacks);
+        if (this.validatePolicies(policies, path)) this.router.patch(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
     };
 
     public post(path: string, policies: AuthPolicy[], ...callbacks: RequestHandler[]): void {
-        // if (this.validatePolicies(policies, path)) this.router.post(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
-        if (this.validatePolicies(policies, path)) this.router.post(path, this.generateCustomResponses, callbacks);
+        if (this.validatePolicies(policies, path)) this.router.post(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
     };
 
     public put(path: string, policies: AuthPolicy[], ...callbacks: RequestHandler[]): void {
-        // if (this.validatePolicies(policies, path)) this.router.put(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
-        if (this.validatePolicies(policies, path)) this.router.put(path, this.generateCustomResponses, callbacks);
+        if (this.validatePolicies(policies, path)) this.router.put(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
     };
 
     public delete(path: string, policies: AuthPolicy[], ...callbacks: RequestHandler[]): void {
-        // if (this.validatePolicies(policies, path)) this.router.delete(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
-        if (this.validatePolicies(policies, path)) this.router.delete(path, this.generateCustomResponses, callbacks);
+        if (this.validatePolicies(policies, path)) this.router.delete(path, this.generateCustomResponses, rbacMiddleware(policies), callbacks);
     };
 
     //=========================//
@@ -54,7 +49,7 @@ export default abstract class BaseRouter {
     //=========================//
 
     private validatePolicies = (policies: AuthPolicy[], path: string): boolean => {
-        if (!policies || !Array.isArray(policies)) throw new InternalError(`No policies on ${path}`);
+        if (!policies.length || !Array.isArray(policies)) throw new InternalError(`No policies on ${path}`);
 
         const allowedPolicies = ['PUBLIC', 'AUTHORIZED', 'USER', 'ADMIN'];
 

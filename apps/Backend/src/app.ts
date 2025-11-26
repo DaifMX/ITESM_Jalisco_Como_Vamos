@@ -11,6 +11,7 @@ import { auth } from '@/lib/auth';
 import AnswerRouter from '@/routers/AnswerRouter';
 import CategoryRouter from '@/routers/CategoryRouter';
 import QuestionRouter from '@/routers/QuestionRouter';
+import SystemRouter from './routers/SystemRouter';
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/answer', new AnswerRouter().getRouter());
 app.use('/api/category', new CategoryRouter().getRouter());
 app.use('/api/question', new QuestionRouter().getRouter());
+app.use('/api/sys', new SystemRouter().getRouter());
 
 app.listen(PORT, () => {
     console.log(`App listening on ${PORT}`);
