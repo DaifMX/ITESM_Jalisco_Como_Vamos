@@ -3,8 +3,6 @@ import { auth } from "@/lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
 
 import type { Request, Response, NextFunction } from "express";
-import UserRepository from '@/repositories/UserRepository';
-
 
 export function rbacMiddleware(policies: Array<string>) {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -16,13 +14,10 @@ export function rbacMiddleware(policies: Array<string>) {
                 headers: fromNodeHeaders(req.headers)
             });
 
-            const userId = session?.user.id;
-            if (!userId) return res.sendUnauthorized('Sesión no iniciada.');
+            const userRole = (session?.user as any).role;
+            if (!userRole) return res.sendUnauthorized('Sesión no iniciada.');
 
-            const userRepo = new UserRepository();
-            const user = await userRepo.getById(userId);
-
-            if (!policies.includes((user as any).role.toUpperCase()))
+            if (!policies.includes(userRole.toUpperCase()))
                 return res.sendForbidden('No tienes permiso para realizar esta acción.');
 
             return next();
