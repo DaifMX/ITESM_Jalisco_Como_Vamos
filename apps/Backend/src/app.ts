@@ -11,7 +11,7 @@ import { auth } from '@/lib/auth';
 import AnswerRouter from '@/routers/AnswerRouter';
 import CategoryRouter from '@/routers/CategoryRouter';
 import QuestionRouter from '@/routers/QuestionRouter';
-import SystemRouter from './routers/SystemRouter';
+import SystemRouter from '@/routers/SystemRouter';
 
 const app = express();
 
