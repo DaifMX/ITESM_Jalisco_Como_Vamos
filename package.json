@@ -8,6 +8,7 @@
     "db:studio": "pnpm --filter @jcv/api db:studio",
     "dev:api": "pnpm --filter @jcv/api dev",
     "dev:mobile": "pnpm run --filter @jcv/app start",
+    "dev:admin": "pnpm run --filter @jcv/admin dev",
     "parse": "pnpm run --filter @jcv/xlsx_parser dev"
   },
   "keywords": [],
