@@ -8,6 +8,7 @@ export const questions = pgTable('questions', {
     id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
     xlsxCode: text('xlsxCode').notNull().unique(),
     value: text('value').notNull(),
+    valueShort: text('valueShort'),
     categoryId: uuid('categoryId').notNull().references(() => categories.id)
 });
 

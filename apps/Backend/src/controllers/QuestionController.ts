@@ -58,6 +58,23 @@ export default class QuestionController {
         }
     };
 
+    public update = async (req: Request, res: Response) => {
+        try {
+            const id = req.params.id;
+            if (!id) throw new RuntimeError('Id no recibido.');
+
+            const updatedQuestion = await this.service.update(id, req.body);
+            return res.sendSuccess(updatedQuestion);
+
+        } catch (err: any) {
+            if (err instanceof ValidationError) return res.sendBadRequest(err.message, err.fields);
+            if (err instanceof ElementNotFoundError) return res.sendNotFound(err.message);
+            if (err instanceof RuntimeError) return res.sendBadRequest(err.message);
+
+            return res.sendInternalServerError(err.message);
+        }
+    };
+
     public pushResponse = async (req: Request, res: Response) => {
         try {
             const questionData = await this.service.pushResponse(req.body);

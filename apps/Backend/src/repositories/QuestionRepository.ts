@@ -33,6 +33,14 @@ export default class QuestionRepository {
             .where(eq(questions.id, id))
     };
 
+    public update = async (id: string, data: Partial<QuestionNew>) => {
+        return await this.db
+            .update(questions)
+            .set(data)
+            .where(eq(questions.id, id))
+            .returning();
+    };
+
     public pushResponse = async (data: QuestionDataNew) => {
         return await this.db
             .insert(questionData)
