@@ -6,8 +6,7 @@ export default class SystemController {
     public appVersion = async (req: Request, res: Response) => {
         const clientVersion = req.body.clientVersion;
         const minVersion = process.env.APP_MIN_VERSION;
-
-        console.log(clientVersion);
+        
         if (!minVersion) throw new InternalError("Error Critico: VERSION MINIMA NO RECIBIDA.");
 
         // Compare versions (format: Major.Minor.Build)

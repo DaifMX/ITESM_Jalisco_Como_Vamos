@@ -1,16 +1,14 @@
 import { eq } from "drizzle-orm";
-import db, { categories, questions, questionData } from "@/db/schema";
+import db, { questions, questionData } from "@/db/schema";
 
 import type { QuestionNew, QuestionDataNew } from "@/types/schema-types";
 
 export default class QuestionRepository {
     private db = db;
 
-    private model = questions;
-
     public create = async (question: QuestionNew) => {
         return await this.db
-            .insert(this.model)
+            .insert(questions)
             .values(question)
             .returning();
     };
@@ -24,16 +22,15 @@ export default class QuestionRepository {
     public getAllByCategory = async (categoryId: string) => {
         return await this.db
             .select()   
-            .from(this.model)
-            .leftJoin(categories, eq(this.model.categoryId, categories.id))
-            .where(eq(this.model.categoryId, categoryId));
+            .from(questions)
+            .where(eq(questions.categoryId, categoryId));
     };
     
     public getById = async (id: string) => {
         return await this.db
             .select()
-            .from(this.model)
-            .where(eq(this.model.id, id))
+            .from(questions)
+            .where(eq(questions.id, id))
     };
 
     public pushResponse = async (data: QuestionDataNew) => {

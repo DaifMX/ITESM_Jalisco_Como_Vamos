@@ -7,7 +7,6 @@ const controller = new QuestionController();
 export default class QuestionRouter extends BaseRouter {
     init() {
         this.get('/', ['PUBLIC'], controller.getAll);
-        this.get('/category/:cid', ['PUBLIC'], controller.getAllByCategory);
         this.get('/:id', ['PUBLIC'], controller.getById);
         this.post('/', ['PUBLIC'], controller.create);
         this.post('/push', ['PUBLIC'], controller.pushResponse);

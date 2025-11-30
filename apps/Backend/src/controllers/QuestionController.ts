@@ -19,29 +19,22 @@ export default class QuestionController {
         }
     };
 
-    public getAll = async (_req: Request, res: Response) => {
+    public getAll = async (req: Request, res: Response) => {
         try {
-            const questions = await this.service.getAll();
+            const cid = req.query.cid;
+            let questions;
+
+            if (cid && cid !== '') {
+                questions = await this.service.getAllByCategory(cid as string);
+            } else {
+                questions = await this.service.getAll();
+            }
+            
             return res.sendSuccess(questions);
 
         } catch (err: any) {
             if (err instanceof ElementNotFoundError) return res.sendNotFound(err.message);
-
-            return res.sendInternalServerError(err.message);
-        }
-    };
-
-    public getAllByCategory = async (req: Request, res: Response) => {
-        try {
-            const cid = req.params.cid; // categoryId
-            if (!cid) throw new RuntimeError('Id de categoría no recibido.');
-
-            const questions = await this.service.getAllByCategory(cid);
-            return res.sendSuccess(questions);
-
-        } catch (err: any) {
-            if (err instanceof ElementNotFoundError) return res.sendNotFound(err.message);
-            if (err instanceof ValidationError) return res.sendBadRequest(err.message);
+            if (err instanceof ValidationError) return res.sendBadRequest(err.message, err.fields);
             if (err instanceof RuntimeError) return res.sendBadRequest(err.message);
 
             return res.sendInternalServerError(err.message);
@@ -71,7 +64,6 @@ export default class QuestionController {
             return res.sendCreated(questionData);
 
         } catch (err: any) {
-            console.log(err.message)
             if (err instanceof ValidationError) return res.sendBadRequest(err.message);
             if (err instanceof RuntimeError) return res.sendBadRequest(err.message);
             return res.sendInternalServerError(err.message);

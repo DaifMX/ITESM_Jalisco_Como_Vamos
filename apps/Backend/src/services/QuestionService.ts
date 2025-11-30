@@ -3,7 +3,8 @@ import { questionInsertSchema, questionSelectSchema } from "@/db/schema";
 
 import type { QuestionNew, QuestionDataNew } from "@/types/schema-types";
 
-import { ElementNotFoundError, RuntimeError } from "@jcv/errors";
+import { ElementNotFoundError, RuntimeError, ValidationError } from "@jcv/errors";
+import { ZodError } from "zod";
 
 export default class QuestionService {
     private repository = new QuestionRepository();
@@ -16,8 +17,19 @@ export default class QuestionService {
     };
 
     public getAllByCategory = async (categoryId: string) => {
-        const parsed = questionSelectSchema.parse(categoryId);
-        if (!parsed.categoryId) throw new RuntimeError('Categoría invalida');
+        let parsed;
+
+        try {
+            parsed = questionSelectSchema.pick({ categoryId: true }).parse({ categoryId });
+
+        } catch (err: any) {
+            if (err instanceof ZodError) {
+                const errorArray = ValidationError.parseZodError(err);
+                throw new ValidationError(undefined, errorArray);
+            }
+        };
+
+        if (!parsed?.categoryId) throw new RuntimeError('Categoría invalida');
 
         const questions = await this.repository.getAllByCategory(parsed.categoryId);
         if (!questions) throw new ElementNotFoundError('Preguntas no encontradas en la base de datos.');
