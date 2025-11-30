@@ -12,6 +12,9 @@ import AnswerRouter from '@/routers/AnswerRouter';
 import CategoryRouter from '@/routers/CategoryRouter';
 import QuestionRouter from '@/routers/QuestionRouter';
 import SystemRouter from '@/routers/SystemRouter';
+import StatsRouter from '@/routers/StatsRouter';
+
+import getTrustedOrigins from '@/utils/getTrustedOrigins';
 
 const app = express();
 
@@ -19,8 +22,8 @@ const PORT = process.env.API_PORT;
 
 app.use(morgan('tiny'));
 app.use(cors({
-    origin: '*',
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    origin: getTrustedOrigins(),
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
 }));
 
@@ -34,6 +37,7 @@ app.use('/api/answer', new AnswerRouter().getRouter());
 app.use('/api/category', new CategoryRouter().getRouter());
 app.use('/api/question', new QuestionRouter().getRouter());
 app.use('/api/sys', new SystemRouter().getRouter());
+app.use('/api/stats', new StatsRouter().getRouter());
 
 app.listen(PORT, () => {
     console.log(`App listening on ${PORT}`);
