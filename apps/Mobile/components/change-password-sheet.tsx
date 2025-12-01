@@ -14,6 +14,7 @@ interface ChangePasswordSheetProps {
 };
 
 export function ChangePasswordSheet({ isOpen, onClose, onSubmit }: ChangePasswordSheetProps) {
+    const passwordMinLen = 8;
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,6 +38,9 @@ export function ChangePasswordSheet({ isOpen, onClose, onSubmit }: ChangePasswor
             setConfirmPassword('');
             setError(null);
             setIsSubmitting(false);
+            setShowConfirm(false);
+            setShowNew(false);
+            setShowCurrent(false);
         }
     }, [isOpen]);
 
@@ -48,8 +52,8 @@ export function ChangePasswordSheet({ isOpen, onClose, onSubmit }: ChangePasswor
             return;
         }
 
-        if (newPassword.length < 8) {
-            setError("La nueva contraseña debe tener al menos 6 caracteres.");
+        if (newPassword.length < passwordMinLen) {
+            setError(`La nueva contraseña debe tener al menos ${passwordMinLen} caracteres.`);
             return;
         }
 
@@ -94,7 +98,7 @@ export function ChangePasswordSheet({ isOpen, onClose, onSubmit }: ChangePasswor
                     </View>
 
                     <ThemedText className="text-gray-500 mb-6 text-sm">
-                        Tu contraseña debe tener al menos 8 caracteres.
+                        {`Tu contraseña debe tener al menos ${passwordMinLen} caracteres.`}
                     </ThemedText>
 
                     {/* Inputs */}

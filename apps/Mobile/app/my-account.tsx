@@ -10,7 +10,7 @@ import { Divider } from "@/components/ui/divider";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { ThemedText } from "@/components/themed-text";
 
-import { ChangePasswordSheet } from "@/components/change-password-sheet"; 
+import { ChangePasswordSheet } from "@/components/change-password-sheet";
 import ErrorDialog from "@/components/error-dialog";
 import LoadingDialog from "@/components/loading-dialog";
 import { TFAPasswordInputDialog } from "@/components/2fa-password-input-dialog";
@@ -20,9 +20,10 @@ import getBetterAuthErrorMessage_ES from "@/functions/getBetterAuthErrorMessage_
 import { isUsingSocialProvider } from "@/functions/isUsingSocialProvider";
 
 import { ArrowLeftIcon, KeyRoundIcon, RectangleEllipsisIcon, LogOutIcon, TrashIcon } from "lucide-react-native";
+import { GenericMessageDialog } from "@/components/success-dialog";
 
 type DialogState = {
-    type: 'none' | 'error' | 'password' | 'change-password-sheet' | '2fa-secret' | '2fa-confirm' | 'name';
+    type: 'none' | 'error' | 'password' | 'change-password-sheet' | '2fa-secret' | '2fa-confirm' | 'name' | 'success';
     title?: string;
     message?: string;
     callback?: (...args: any[]) => Promise<any>;
@@ -38,58 +39,26 @@ export default function MyAccount() {
     const [dialog, setDialog] = useState<DialogState>({ type: 'none' });
     const [secret2FA, setSecret2FA] = useState('');
 
-    // useEffect(() => {
-    //     let isMounted = true;
-
-    //     const checkProvider = async () => {
-    //         try {
-    //             const result = await isUsingSocialProvider();
-    //             if (isMounted) setIsSocialProviderSession(result);
-    //         } catch { }
-    //     };
-
-    //     checkProvider();
-
-    //     return () => {
-    //         isMounted = false;
-    //     };
-    // }, [])
-
     useEffect(() => {
         let isMounted = true;
-        console.log('[MyAccount] Montando componente...'); // LOG 1
 
         const checkProvider = async () => {
             try {
-                console.log('[MyAccount] Iniciando checkProvider...'); // LOG 2
-                const start = Date.now();
-
                 const result = await isUsingSocialProvider();
-
-                const end = Date.now();
-                console.log(`[MyAccount] checkProvider terminó en ${end - start}ms`); // LOG 3
-
-                if (end - start > 500) console.warn('¡OJO! isUsingSocialProvider está tardando mucho');
-
                 if (isMounted) setIsSocialProviderSession(result);
-            } catch (e) {
-                console.error(e);
-            }
+            } catch { }
         };
 
         checkProvider();
 
         return () => {
-            console.log('[MyAccount] Desmontando componente'); // LOG 4
             isMounted = false;
         };
     }, [])
 
-
     // ==== HANDLERS ==== \\
     const handleChangePassword = async (currentPassword: string, newPassword: string) => {
         try {
-            // Cerramos el modal primero para mejorar la UX
             setDialog({ type: 'none' });
             setIsLoading(true);
 
@@ -99,6 +68,8 @@ export default function MyAccount() {
                 revokeOtherSessions: true,
             });
 
+            if (data) setDialog({ type: 'success', title: 'Cambiar contraseña', message: '¡Contraseña modificada con éxito!' });
+
             if (error) {
                 const errorMessage = error?.code
                     ? getBetterAuthErrorMessage_ES(error.code)
@@ -106,7 +77,7 @@ export default function MyAccount() {
                 setDialog({ type: 'error', message: errorMessage ?? 'Error al cambiar la contraseña' });
                 return;
             }
-            // Opcional: Mostrar mensaje de éxito
+
         } catch (err: any) {
             setDialog({ type: 'error', message: err.message ?? 'Error al cambiar la contraseña' });
         } finally {
@@ -115,7 +86,6 @@ export default function MyAccount() {
     };
 
     const handleChangePassword_Btn = () => {
-        // Cambiamos el tipo de dialogo a nuestro nuevo sheet
         setDialog({ type: 'change-password-sheet', callback: handleChangePassword });
     };
 
@@ -142,7 +112,7 @@ export default function MyAccount() {
             setSecret2FA(secret);
             setDialog({ type: '2fa-secret' });
 
-        } catch (err: any) {
+        } catch {
             setDialog({ type: 'error', message: 'Error al habilitar 2FA. Intenta nuevamente más tarde.' });
         }
     };
@@ -166,7 +136,7 @@ export default function MyAccount() {
     const handleRemoveAccount = async (password: string) => {
         try {
             setIsLoading(true);
-            const { data, error } = await authClient.deleteUser({ password });
+            const { error } = await authClient.deleteUser({ password });
 
             if (error) {
                 const errorMessage = error?.code
@@ -196,15 +166,20 @@ export default function MyAccount() {
                 contentContainerStyle={{ padding: 32, gap: 20, display: 'flex', flexGrow: 1 }}
             >
                 <LoadingDialog isOpen={isLoading} />
-                
+
                 <ErrorDialog
                     isOpen={dialog.type === 'error'}
                     cause={dialog.message ?? ''}
                     handleClose={() => setDialog({ type: 'none' })}
                 />
 
-                {/* Aquí iría tu componente PasswordInputDialog original para las otras acciones (2FA, Eliminar) */}
-                {/* <PasswordInputDialog ... /> */}
+                <GenericMessageDialog
+                    isOpen={dialog.type === 'success'}
+                    title={dialog.title!}
+                    message={dialog.message!}
+                    submitBtnTxt={'Aceptar'}
+                    onSubmit={() => setDialog({ type: 'none' })}
+                />
 
                 <TFASecretCopyDialog
                     isOpen={dialog.type === '2fa-secret'}
@@ -213,7 +188,7 @@ export default function MyAccount() {
                     handleSubmit={() => setDialog({ type: 'none' })}
                     handleCancel={() => setDialog({ type: 'none' })}
                 />
-                
+
                 <TFAPasswordInputDialog
                     isOpen={dialog.type === 'password'}
                     onSubmit={dialog.callback}
