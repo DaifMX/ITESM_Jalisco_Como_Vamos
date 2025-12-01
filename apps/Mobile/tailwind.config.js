@@ -174,6 +174,7 @@ module.exports = {
           error: 'rgb(var(--color-indicator-error)/<alpha-value>)',
         },
         'pantone-dark-blue': 'rgb(0 61 165 / <alpha-value>)',
+        'pantone-darkest-blue': 'rgb(0 48 132 / <alpha-value>)',
         'pantone-light-blue': 'rgb(153 179 214 / <alpha-value>)',
         'pantone-yellow': 'rgb(254 221 0 / <alpha-value>)',
         'pantone-yellow-light': 'rgb(255 199 44 / <alpha-value>)',

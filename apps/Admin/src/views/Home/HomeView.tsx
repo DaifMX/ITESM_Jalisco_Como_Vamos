@@ -45,7 +45,7 @@ export default function HomeView() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stats/dashboard`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/stats/dashboard`, {
         method: 'GET',
         credentials: 'include',
         headers: {

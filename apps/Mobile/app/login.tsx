@@ -8,15 +8,18 @@ import { authClient } from '@/lib/auth-client';
 import ErrorDialog from '@/components/error-dialog';
 import LoadingDialog from '@/components/loading-dialog';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { Footer } from '@/components/footer';
 
+import { Divider } from '@/components/ui/divider';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
-import { Divider } from '@/components/ui/divider';
 
 import { UserIcon } from 'lucide-react-native';
 import { LoginButton } from '@/components/login-btn';
-import { Footer } from '@/components/footer';
+
+import getBetterAuthErrorMessage_ES from '@/functions/getBetterAuthErrorMessage_ES';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const GoogleIcon = () => (
   <Image
@@ -57,18 +60,23 @@ export default function HomeScreen() {
           onResponse: () => {
             setIsLoading(false);
           },
-          onSuccess: () => {
-            router.push('/home');
+          onSuccess: (context) => {
+            router.replace('/home');
           },
           onError: (ctx: any) => {
-            console.log(ctx.error.message);
-            setError(ctx.error.message);
-            setIsErrorDiagOpen(true)
+            const errorMessage = ctx.error?.code 
+              ? getBetterAuthErrorMessage_ES(ctx.error.code)
+              : ctx.error.message;
+            setError(errorMessage);
+            setIsErrorDiagOpen(true);
           }
         }
       );
     } catch (err: any) {
-      setError(err.message ?? 'Error desconocido.');
+      const errorMessage = err.code 
+        ? getBetterAuthErrorMessage_ES(err.code)
+        : (err.message ?? 'Error desconocido.');
+      setError(errorMessage);
       setIsErrorDiagOpen(true);
 
     } finally {
@@ -94,14 +102,19 @@ export default function HomeScreen() {
             router.push('/home');
           },
           onError: (ctx: any) => {
-            console.log(ctx.error)
-            setError(ctx.error.message);
-            setIsErrorDiagOpen(true)
+            const errorMessage = ctx.error?.code 
+              ? getBetterAuthErrorMessage_ES(ctx.error.code)
+              : ctx.error.message;
+            setError(errorMessage);
+            setIsErrorDiagOpen(true);
           }
         }
       );
     } catch (err: any) {
-      setError(err.message ?? 'Error desconocido.');
+      const errorMessage = err.code 
+        ? getBetterAuthErrorMessage_ES(err.code)
+        : (err.message ?? 'Error desconocido.');
+      setError(errorMessage);
       setIsErrorDiagOpen(true);
 
     } finally {
@@ -110,7 +123,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <>
+    <SafeAreaView className='flex-1 bg-white'>
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
         headerImage={
@@ -189,7 +202,7 @@ export default function HomeScreen() {
         </ThemedView>
       </ParallaxScrollView>
       <Footer/>
-    </>
+    </SafeAreaView>
   );
 }
 

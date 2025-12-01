@@ -1,11 +1,16 @@
-import { useState } from "react";
-import { ScrollView, Pressable, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useState, useEffect } from "react";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import useSWR from "swr";
 
 import { authClient } from "@/lib/auth-client";
+import { fetcher } from "@/lib/axios";
 
 import { AvatarSection } from "@/components/avatar-section";
+import { BasicElementCard } from "@/components/basic-elem-card";
+import { CategoryCard } from "@/components/category-card";
 import { Footer } from "@/components/footer";
+
+import { ScrollView, Pressable, View } from "react-native";
 
 import { Divider } from "@/components/ui/divider";
 import { HStack } from "@/components/ui/hstack";
@@ -14,96 +19,31 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { VStack } from "@/components/ui/vstack";
 
-import {
-  ArrowLeftIcon,
-  SearchIcon,
-  GuitarIcon,
-  SpeechIcon,
-  CrossIcon,
-  CarIcon,
-  LucideIcon,
-} from "lucide-react-native";
-import { BasicElementCard } from "@/components/basic-elem-card";
-import { CategoryCard } from "@/components/category-card";
+import { ArrowLeftIcon, SearchIcon } from "lucide-react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 export type Session = typeof authClient.$Infer.Session;
 
 export default function Question() {
   const router = useRouter();
+  const params = useLocalSearchParams();
 
   const session = authClient.useSession();
 
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchBarVal, setSearchBarVal] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    params.categoryId as string || null
+  );
 
-  const [categories, setCategories] = useState([
-    {
-      id: 0,
-      text: "Salud",
-      icon: CrossIcon,
-      color: "#FFFFFF",
-      bgColor: "rgb(0, 61, 165)",
-    },
-    {
-      id: 1,
-      text: "Relaciones interpersonales",
-      icon: SpeechIcon,
-      color: "#FFFFFF",
-      bgColor: "rgb(243, 112, 33)",
-    },
-    {
-      id: 2,
-      text: "Cultura y recreación",
-      icon: GuitarIcon,
-      color: "#FFFFFF",
-      bgColor: "rgb(196, 214, 0)",
-    },
-    {
-      id: 3,
-      text: "Movilidad",
-      icon: CarIcon,
-      color: "#FFFFFF",
-      bgColor: "rgb(228, 0, 43)",
-    },
-  ]);
-
-  const [questions, setQuestions] = useState([
-    {
-      id: 0,
-      text: "¿Qué tan satisfecha(o) está con la educación escolar que tiene?",
-      categoryId: 0,
-    },
-    { id: 1, text: "¿Cómo calificaría su calidad de vida?", categoryId: 1 },
-    { id: 2, text: "En general, ¿qué tan feliz es usted?", categoryId: 2 },
-    { id: 3, text: "¿Cuál es su actividad diaria principal?", categoryId: 3 },
-    {
-      id: 4,
-      text: "¿Qué tan satisfecha(o) está con la educación escolar que tiene?",
-      categoryId: 0,
-    },
-    { id: 5, text: "¿Cómo calificaría su calidad de vida?", categoryId: 1 },
-    { id: 6, text: "En general, ¿qué tan feliz es usted?", categoryId: 2 },
-    { id: 7, text: "¿Cuál es su actividad diaria principal?", categoryId: 3 },
-    {
-      id: 8,
-      text: "¿Qué tan satisfecha(o) está con la educación escolar que tiene?",
-      categoryId: 0,
-    },
-    { id: 9, text: "¿Cómo calificaría su calidad de vida?", categoryId: 1 },
-    { id: 10, text: "En general, ¿qué tan feliz es usted?", categoryId: 2 },
-    { id: 11, text: "¿Cuál es su actividad diaria principal?", categoryId: 3 },
-  ]);
-
-  const COLORS: string[] = [
-    "rgb(0, 61, 165)", // pantone-dark-blue
-    "rgb(243, 112, 33)", // pantone-orange
-    "rgb(196, 214, 0)", // pantone-green
-    "rgb(228, 0, 43)", // pantone-red
-    "rgb(254, 221, 0)", // pantone-yellow
-    "rgb(153, 179, 214)", // pantone-light-blue
-  ];
+  useEffect(() => {
+    if (params.categoryId) {
+      setSelectedCategoryId(params.categoryId as string);
+    }
+  }, [params.categoryId]);
 
   return (
-    <>
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1 bg-white"
         showsVerticalScrollIndicator={false}
@@ -156,17 +96,7 @@ export default function Question() {
               nestedScrollEnabled
             >
               <HStack space="md">
-                {categories.map((c) => {
-                  return (
-                    <CategoryCard
-                      key={c.id}
-                      bgColor={c.bgColor}
-                      color={c.color}
-                      icon={c.icon}
-                      text={c.text}
-                    />
-                  );
-                })}
+                <CategoryList selectedCategoryId={selectedCategoryId} setSelectedCategoryId={setSelectedCategoryId} />
               </HStack>
             </ScrollView>
             <Divider className="bg-black h-[1px]" />
@@ -174,19 +104,57 @@ export default function Question() {
 
           {/* Questions */}
           <VStack space="md">
-            {questions.map((q) => {
-              return (
-                <BasicElementCard
-                  key={q.id}
-                  onPress={() => router.push("/questionData")}
-                  text={q.text}
-                />
-              );
-            })}
+            <QuestionList categoryId={selectedCategoryId} />
           </VStack>
         </View>
       </ScrollView>
       <Footer />
-    </>
+    </SafeAreaView>
   );
 }
+
+const QuestionList = ({ categoryId }: { categoryId: string | null }) => {
+  const router = useRouter();
+
+  const url = categoryId ? `/api/question?cid=${categoryId}` : '/api/question';
+  const { data, error, isLoading } = useSWR(url, fetcher);
+
+  if (error) return <ThemedText className="text-red-500">Error al cargar preguntas</ThemedText>
+
+  if (isLoading) return <ThemedText>Cargando...</ThemedText>
+
+  if (!data || data.length === 0) {
+    return <ThemedText className="text-gray-500">No hay preguntas en esta categoría</ThemedText>
+  }
+
+  return (
+    data?.map((c: any) => {
+      return (
+        <BasicElementCard
+          key={c.id}
+          onPress={() => router.push(`/questionData?id=${c.id}`)}
+          text={c.valueShort}
+        />
+      );
+    })
+  );
+}
+
+const CategoryList = ({ selectedCategoryId, setSelectedCategoryId }: { selectedCategoryId: string | null, setSelectedCategoryId: (id: string) => void }) => {
+  const { data } = useSWR(`api/category`, fetcher);
+
+  return (
+    data?.map((c: any) => {
+      return (
+        <Pressable key={c.id} onPress={() => setSelectedCategoryId(c.id)}>
+          <CategoryCard
+            bgColor={c.color}
+            color={"#FFFFFF"}
+            icon={c.icon}
+            text={c.name}
+          />
+        </Pressable>
+      );
+    })
+  );
+};

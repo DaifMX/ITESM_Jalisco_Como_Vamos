@@ -20,7 +20,6 @@ export function LoginButton({ handleLogin, isLoginBtnDisabled, styles }: { handl
   );
 
   const onPress = () => {
-    console.log('pressed')
     if (isLoginBtnDisabled) {
       buttonRef.current?.shake(runShake);
       Vibration.vibrate(40);

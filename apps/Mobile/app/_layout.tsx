@@ -3,7 +3,6 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 
 import "react-native-reanimated";
@@ -19,7 +18,7 @@ export default function RootLayout() {
 
   return (
     <PlatformVersionCheck>
-      <SafeAreaView className="flex-1 bg-white" edges={["top", "right", "left", "bottom"]}>
+      {/* <SafeAreaView className="flex-1 bg-white" edges={["top", "right", "left", "bottom"]}> */}
         <GluestackUIProvider mode="light">
           <ThemeProvider
             value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
@@ -35,7 +34,7 @@ export default function RootLayout() {
             </Stack>
           </ThemeProvider>
         </GluestackUIProvider>
-      </SafeAreaView>
+      {/* </SafeAreaView> */}
     </PlatformVersionCheck>
   );
 }

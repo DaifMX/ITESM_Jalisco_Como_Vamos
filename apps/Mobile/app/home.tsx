@@ -1,6 +1,6 @@
 import { useState } from "react";
-import useSWR from 'swr';
 import { useRouter } from "expo-router";
+import useSWR from 'swr';
 
 import { ScrollView, View } from "react-native";
 
@@ -18,6 +18,7 @@ import { VStack } from "@/components/ui/vstack";
 
 import { SearchIcon } from "lucide-react-native";
 import { HomeElementCard } from "@/components/home-element-card";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export type Session = typeof authClient.$Infer.Session;
 
@@ -30,7 +31,7 @@ export default function Home() {
     const [searchBarVal, setSearchBarVal] = useState("");
 
     return (
-        <>
+        <SafeAreaView className="flex-1 bg-white">
             <ScrollView
                 className="flex-1 bg-white"
                 showsVerticalScrollIndicator={false}
@@ -39,13 +40,15 @@ export default function Home() {
                 <View className="flex flex-col gap-8">
                     <View className="flex flex-row justify-between">
                         <ThemedText type="title">Inicio</ThemedText>
-                        <AvatarSection
-                            user={session.data?.user}
-                            handleMyAccount={() => router.push('/my-account')}
-                            handleSettings={() => router.push('/my-account')}
-                            handleSignIn={() => router.push('/login')}
-                            handleSignOut={() => { authClient.signOut(); router.push('/login') }}
-                        />
+                        <View className="">
+                            <AvatarSection
+                                user={session.data?.user}
+                                handleMyAccount={() => router.push('/my-account')}
+                                handleSettings={() => router.push('/my-account')}
+                                handleSignIn={() => router.push('/login')}
+                                handleSignOut={() => { authClient.signOut(); router.push('/login') }}
+                            />
+                        </View>
                     </View>
                     <ThemedView lightColor="transparent" darkColor="transparent">
                         <View className="gap-4">
@@ -72,8 +75,8 @@ export default function Home() {
                     </VStack>
                 </View>
             </ScrollView>
-            <Footer/>
-        </>
+            <Footer />
+        </SafeAreaView>
     );
 }
 
@@ -82,21 +85,20 @@ const CategoryList = () => {
 
     const { data, error, isLoading } = useSWR('/api/category', fetcher);
 
-    if (error) return <ThemedText className="color-red-500">Error</ThemedText>
+    if (error) return <ThemedText className="text-red-500">Error</ThemedText>
 
-    if (isLoading) return <ThemedText className="color-blue-400">Error</ThemedText>
+    if (isLoading) return <ThemedText>Cargando...</ThemedText>
 
     return (
         data?.map((c: any) => {
             return (
                 <HomeElementCard
                     key={c.id}
-                    onPress={() => router.push('/questions')}
+                    onPress={() => router.push(`/questions?categoryId=${c.id}`)}
                     text={c.name}
-                    bgColor="white"
-                    color="red"
-                    icon="Angry"
-
+                    bgColor={c.color ?? '#000000'}
+                    color="black"
+                    icon={c.icon ? c.icon : 'Landmark'}
                 />
             );
         })

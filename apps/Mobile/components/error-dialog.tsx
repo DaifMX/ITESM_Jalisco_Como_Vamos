@@ -28,12 +28,13 @@ export default function ErrorDialog({ isOpen, cause, handleClose }: { isOpen: bo
                 </AlertDialogBody>
                 <AlertDialogFooter>
                     <Button
+                        className='bg-pantone-dark-blue rounded-xl'
                         variant="outline"
                         action="primary"
                         onPress={handleClose}
                         size="sm"
                     >
-                        <ButtonText>Cerrar</ButtonText>
+                        <ButtonText className='text-white'>Cerrar</ButtonText>
                     </Button>
                 </AlertDialogFooter>
             </AlertDialogContent>

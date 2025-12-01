@@ -21,6 +21,7 @@ import { AvatarSection } from "@/components/avatar-section";
 import { PieChart, BarChart } from "react-native-chart-kit";
 
 import { ArrowLeftIcon } from "lucide-react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 // ======== Tipos ========
@@ -219,7 +220,7 @@ export default function QuestionData() {
     };
 
     return (
-        <View className="flex-1 bg-background-light">
+        <SafeAreaView className="flex-1 bg-white">
             <View style={styles.header}>
                 <View className="flex flex-row justify-between">
                     <Pressable onPress={() => router.back()}>
@@ -391,7 +392,7 @@ export default function QuestionData() {
                     </View>
                 </View>
             </Modal>
-        </View>
+        </SafeAreaView>
     );
 }
 // ======== UI helpers con tipos ========

@@ -1,22 +1,25 @@
-import { Badge, BadgeIcon, BadgeText } from "@/components/ui/badge";
-import { LucideIcon } from "lucide-react-native";
-import { Pressable } from "react-native";
+import { Badge, BadgeText } from "@/components/ui/badge";
+import { icons } from "lucide-react-native";
+import { Pressable, View } from "react-native";
+import { Icon } from "@/components/icon";
 
 
-export const CategoryCard = ({ bgColor, color, icon, text }: { bgColor: string, color: string, icon: LucideIcon, text: string }) =>{
+export const CategoryCard = ({ bgColor, color, icon, text }: { bgColor: string, color: string, icon: keyof typeof icons, text: string }) =>{
     return (
         <Pressable>
             <Badge
                 className="rounded-xl h-12 px-4 shadow-sm"
                 style={{ backgroundColor: bgColor }}
             >
-                <BadgeIcon
-                    as={icon}
-                    size="lg"
-                    style={{ color: color, strokeWidth: 20 }}
-                />
+                <View style={{ marginRight: 8 }}>
+                    <Icon 
+                        name={icon}
+                        color={color}
+                        size={20}
+                    />
+                </View>
                 <BadgeText
-                    className="font-semibold ml-2"
+                    className="font-semibold"
                     style={{ color: color }}
                 >
                     {text}
