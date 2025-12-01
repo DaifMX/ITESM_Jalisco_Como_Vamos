@@ -23,13 +23,13 @@ export const auth = betterAuth({
   advanced: {
     cookiePrefix: "better-auth",
     crossSubDomainCookies: {
-      enabled: true,
+      enabled: false, // Disable for Expo OAuth - causes state mismatch
     },
     defaultCookieAttributes: {
-      sameSite: "none",
-      secure: true, // false in dev, true in production
+      sameSite: "lax", // Changed from "none" - required for OAuth callback to work
+      secure: true,
     },
-    useSecureCookies: true,
+    useSecureCookies: false,
   },
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -75,7 +75,6 @@ export const auth = betterAuth({
 
       // Check if this request is coming from the Admin Panel
       const isAdminLogin = ctx.headers?.get("x-admin-login") === "true";
-      
       if (!isAdminLogin) {
         // Not an admin login request, allow normal flow
         return;

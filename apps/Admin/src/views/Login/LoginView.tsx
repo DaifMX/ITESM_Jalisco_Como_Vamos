@@ -46,8 +46,9 @@ export default function LoginPage() {
         email,
         password,
       });
-      console.log(result);
+      
       if (result.error) {
+        await authClient.signOut();
         setError(result.error.message || 'Invalid email or password');
       } else if (result.data) {
         navigate('/');
