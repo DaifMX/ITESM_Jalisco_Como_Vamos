@@ -13,7 +13,7 @@ import { Heading } from '@/components/ui/heading';
 import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 
-export function NameInputDialog({
+export function TFAPasswordInputDialog({
     isOpen,
     onSubmit,
     onCancel,

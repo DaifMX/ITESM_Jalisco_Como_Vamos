@@ -6,27 +6,26 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { authClient } from "@/lib/auth-client";
 
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
+import { Divider } from "@/components/ui/divider";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-
 import { ThemedText } from "@/components/themed-text";
 
-import { ALargeSmallIcon, ArrowLeftIcon, KeyRoundIcon, RectangleEllipsisIcon, LogOutIcon, TrashIcon } from "lucide-react-native";
-import { Divider } from "@/components/ui/divider";
-import LoadingDialog from "@/components/loading-dialog";
+import { ChangePasswordSheet } from "@/components/change-password-sheet"; 
 import ErrorDialog from "@/components/error-dialog";
-
-import { isUsingSocialProvider } from "@/functions/isUsingSocialProvider";
-
+import LoadingDialog from "@/components/loading-dialog";
+import { TFAPasswordInputDialog } from "@/components/2fa-password-input-dialog";
 import { TFASecretCopyDialog } from "@/components/2fa-secret-copy-dialog";
-import { PasswordInputDialog } from "@/components/password-input-dialog";
 
 import getBetterAuthErrorMessage_ES from "@/functions/getBetterAuthErrorMessage_ES";
+import { isUsingSocialProvider } from "@/functions/isUsingSocialProvider";
+
+import { ArrowLeftIcon, KeyRoundIcon, RectangleEllipsisIcon, LogOutIcon, TrashIcon } from "lucide-react-native";
 
 type DialogState = {
-    type: 'none' | 'error' | 'password' | '2fa-secret' | '2fa-confirm';
+    type: 'none' | 'error' | 'password' | 'change-password-sheet' | '2fa-secret' | '2fa-confirm' | 'name';
     title?: string;
     message?: string;
-    callback?: (value: string) => Promise<any>;
+    callback?: (...args: any[]) => Promise<any>;
 };
 
 export default function MyAccount() {
@@ -39,32 +38,61 @@ export default function MyAccount() {
     const [dialog, setDialog] = useState<DialogState>({ type: 'none' });
     const [secret2FA, setSecret2FA] = useState('');
 
+    // useEffect(() => {
+    //     let isMounted = true;
+
+    //     const checkProvider = async () => {
+    //         try {
+    //             const result = await isUsingSocialProvider();
+    //             if (isMounted) setIsSocialProviderSession(result);
+    //         } catch { }
+    //     };
+
+    //     checkProvider();
+
+    //     return () => {
+    //         isMounted = false;
+    //     };
+    // }, [])
+
     useEffect(() => {
         let isMounted = true;
+        console.log('[MyAccount] Montando componente...'); // LOG 1
 
         const checkProvider = async () => {
             try {
+                console.log('[MyAccount] Iniciando checkProvider...'); // LOG 2
+                const start = Date.now();
+
                 const result = await isUsingSocialProvider();
+
+                const end = Date.now();
+                console.log(`[MyAccount] checkProvider terminó en ${end - start}ms`); // LOG 3
+
+                if (end - start > 500) console.warn('¡OJO! isUsingSocialProvider está tardando mucho');
+
                 if (isMounted) setIsSocialProviderSession(result);
-            } catch { }
+            } catch (e) {
+                console.error(e);
+            }
         };
 
         checkProvider();
 
         return () => {
+            console.log('[MyAccount] Desmontando componente'); // LOG 4
             isMounted = false;
         };
     }, [])
 
 
     // ==== HANDLERS ==== \\
-    const handleChangeName = () => {
-
-    };
-
-    const handleChangePassword = async (currentPassword: string) => {
-        const newPassword = ''; // This needs to be collected from user
+    const handleChangePassword = async (currentPassword: string, newPassword: string) => {
         try {
+            // Cerramos el modal primero para mejorar la UX
+            setDialog({ type: 'none' });
+            setIsLoading(true);
+
             const { data, error } = await authClient.changePassword({
                 currentPassword,
                 newPassword,
@@ -75,17 +103,20 @@ export default function MyAccount() {
                 const errorMessage = error?.code
                     ? getBetterAuthErrorMessage_ES(error.code)
                     : error.message;
-                setDialog({ type: 'error', message: errorMessage ?? 'Error al habilitar 2FA' });
+                setDialog({ type: 'error', message: errorMessage ?? 'Error al cambiar la contraseña' });
                 return;
             }
-
+            // Opcional: Mostrar mensaje de éxito
         } catch (err: any) {
-
+            setDialog({ type: 'error', message: err.message ?? 'Error al cambiar la contraseña' });
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleChangePassword_Btn = () => {
-        setDialog({ type: 'password', title: 'Cambiar contraseña', callback: handleChangePassword });
+        // Cambiamos el tipo de dialogo a nuestro nuevo sheet
+        setDialog({ type: 'change-password-sheet', callback: handleChangePassword });
     };
 
     const handleAdd2FA = async (password: string) => {
@@ -136,15 +167,15 @@ export default function MyAccount() {
         try {
             setIsLoading(true);
             const { data, error } = await authClient.deleteUser({ password });
-            
+
             if (error) {
                 const errorMessage = error?.code
                     ? getBetterAuthErrorMessage_ES(error.code)
                     : error.message;
-                setDialog({ type: 'error', message: errorMessage ?? 'Error al habilitar 2FA' });
+                setDialog({ type: 'error', message: errorMessage ?? 'Error al eliminar cuenta' });
                 return;
             }
-            
+
             router.replace('/login');
         } catch {
             setDialog({ type: 'error', message: 'Error al eliminar la cuenta.' });
@@ -165,23 +196,34 @@ export default function MyAccount() {
                 contentContainerStyle={{ padding: 32, gap: 20, display: 'flex', flexGrow: 1 }}
             >
                 <LoadingDialog isOpen={isLoading} />
+                
                 <ErrorDialog
                     isOpen={dialog.type === 'error'}
                     cause={dialog.message ?? ''}
                     handleClose={() => setDialog({ type: 'none' })}
                 />
-                <PasswordInputDialog
-                    isOpen={dialog.type === 'password'}
-                    title={dialog.title ?? ''}
-                    onSubmit={dialog.callback}
-                    onCancel={() => setDialog({ type: 'none' })}
-                />
+
+                {/* Aquí iría tu componente PasswordInputDialog original para las otras acciones (2FA, Eliminar) */}
+                {/* <PasswordInputDialog ... /> */}
+
                 <TFASecretCopyDialog
                     isOpen={dialog.type === '2fa-secret'}
                     title={'Google Authenticator'}
                     value={secret2FA}
                     handleSubmit={() => setDialog({ type: 'none' })}
                     handleCancel={() => setDialog({ type: 'none' })}
+                />
+                
+                <TFAPasswordInputDialog
+                    isOpen={dialog.type === 'password'}
+                    onSubmit={dialog.callback}
+                    onCancel={() => setDialog({ type: 'none' })}
+                />
+
+                <ChangePasswordSheet
+                    isOpen={dialog.type === 'change-password-sheet'}
+                    onClose={() => setDialog({ type: 'none' })}
+                    onSubmit={dialog.callback}
                 />
 
                 <View className="flex flex-row justify-between">
@@ -211,14 +253,6 @@ export default function MyAccount() {
                         ?
                         <View className="flex-1 justify-between">
                             <View className="flex">
-                                <Button
-                                    className="flex flex-row my-3 h-14 bg-[#F5F5F5] data-[active=true]:bg-[#b2a8a8] justify-start p-2 rounded-lg items-center"
-                                    isDisabled={isSocialProviderSession}
-                                    onPress={handleChangeName}
-                                >
-                                    <ButtonIcon as={ALargeSmallIcon} className='w-7 h-7 mr-2 color-black data-[active=true]:color-white' />
-                                    <ButtonText className='color-black data-[active=true]:color-black'>Cambiar nombre</ButtonText>
-                                </Button>
                                 <Button
                                     className="flex flex-row my-3 h-14 bg-[#F5F5F5] data-[active=true]:bg-[#b2a8a8] justify-start p-2 rounded-lg items-center"
                                     isDisabled={isSocialProviderSession}
