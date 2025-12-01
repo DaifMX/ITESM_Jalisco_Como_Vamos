@@ -11,7 +11,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@better-auth/expo": "1.4.1",
+    "@better-auth/expo": "1.4.4",
     "@expo/html-elements": "0.10.1",
     "@expo/vector-icons": "15.0.2",
     "@gluestack-ui/core": "3.0.10",
@@ -23,7 +23,7 @@
     "@react-navigation/native": "7.1.8",
     "axios": "1.13.2",
     "babel-plugin-module-resolver": "5.0.2",
-    "better-auth": "1.4.1",
+    "better-auth": "1.4.4",
     "expo": "54.0.13",
     "expo-application": "^7.0.7",
     "expo-clipboard": "^8.0.7",

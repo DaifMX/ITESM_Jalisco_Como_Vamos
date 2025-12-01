@@ -25,6 +25,8 @@ app.use(cors({
     origin: getTrustedOrigins(),
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "x-admin-login", "user-agent", "cookie"],
+    exposedHeaders: ["set-cookie"],
 }));
 
 app.all("/api/auth/*splat", toNodeHandler(auth)); // DON'T PLACE BEFORE app.use(express.json())

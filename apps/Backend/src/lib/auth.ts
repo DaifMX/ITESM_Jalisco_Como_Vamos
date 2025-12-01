@@ -29,6 +29,7 @@ export const auth = betterAuth({
       sameSite: "none",
       secure: true, // false in dev, true in production
     },
+    useSecureCookies: true,
   },
   database: drizzleAdapter(db, {
     provider: "pg",
