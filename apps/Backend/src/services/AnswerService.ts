@@ -17,7 +17,7 @@ export default class AnswerService {
 
     public getById = async (id: string) => {
         let answer = await this.repository.getById(id);
-        if (!answer) throw new ElementNotFoundError(`Respuesta ID-${id} no encontrada en la base de datos.`);
+        if (!answer || (Array.isArray(answer) && !answer.length)) throw new ElementNotFoundError(`Respuesta ID-${id} no encontrada en la base de datos.`);
 
         return answer;
     };
@@ -28,4 +28,4 @@ export default class AnswerService {
 
         return newAnswer;
     };
-}
+} 
