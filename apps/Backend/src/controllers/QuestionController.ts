@@ -46,7 +46,9 @@ export default class QuestionController {
             const id = req.params.id;
             if (!id) throw new RuntimeError('Id no recibido.');
 
-            const question = await this.service.getById(id);
+            const segmentValueId = req.query.segmentValueId as string | undefined;
+            const question = await this.service.getById(id, segmentValueId);
+
             return res.sendSuccess(question);
 
         } catch (err: any) {
@@ -82,6 +84,21 @@ export default class QuestionController {
 
         } catch (err: any) {
             if (err instanceof ValidationError) return res.sendBadRequest(err.message);
+            if (err instanceof RuntimeError) return res.sendBadRequest(err.message);
+            return res.sendInternalServerError(err.message);
+        }
+    };
+
+    public getAnswersByQuestionId = async (req: Request, res: Response) => {
+        try {
+            const questionId = req.params.id;
+            if (!questionId) throw new RuntimeError('Id no recibido.');
+
+            const answers = await this.service.getAnswersByQuestionId(questionId);
+            return res.sendSuccess(answers);
+
+        } catch (err: any) {
+            if (err instanceof ElementNotFoundError) return res.sendNotFound(err.message);
             if (err instanceof RuntimeError) return res.sendBadRequest(err.message);
             return res.sendInternalServerError(err.message);
         }

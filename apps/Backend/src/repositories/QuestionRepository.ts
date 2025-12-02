@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import db, { questions, questionData } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import db, { questions, questionData, answers } from "@/db/schema";
 
 import type { QuestionNew, QuestionDataNew } from "@/types/schema-types";
 
@@ -26,11 +26,29 @@ export default class QuestionRepository {
             .where(eq(questions.categoryId, categoryId));
     };
     
-    public getById = async (id: string) => {
+    public getById = async (id: string, segmentValueId?: string) => {
+        if (segmentValueId) {
+            return await this.db
+                .select()
+                .from(questions)
+                .where(eq(questions.id, id))
+                .leftJoin(
+                    questionData,
+                    and(
+                        eq(questionData.questionId, id),
+                        eq(questionData.segmentValueId, segmentValueId)
+                    )
+                )
+                .leftJoin(
+                    answers,
+                    eq(questionData.answerId, answers.id)
+                );
+        }
+
         return await this.db
             .select()
             .from(questions)
-            .where(eq(questions.id, id))
+            .where(eq(questions.id, id));
     };
 
     public update = async (id: string, data: Partial<QuestionNew>) => {
@@ -46,5 +64,17 @@ export default class QuestionRepository {
             .insert(questionData)
             .values(data)
             .returning();
+    };
+
+    public getAnswersByQuestionId = async (questionId: string) => {
+        return await this.db
+            .select({
+                answerId: answers.id,
+                answerValue: answers.value,
+            })
+            .from(questionData)
+            .where(eq(questionData.questionId, questionId))
+            .innerJoin(answers, eq(questionData.answerId, answers.id))
+            .groupBy(answers.id, answers.value);
     };
 }

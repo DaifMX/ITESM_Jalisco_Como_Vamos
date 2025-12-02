@@ -39,11 +39,30 @@ export default class QuestionService {
         return questions;
     };
 
-    public getById = async (id: string) => {
-        let question = await this.repository.getById(id);
-        if (!question) throw new ElementNotFoundError(`Pregunta ID-${id} no encontrada en la base de datos.`);
+    public getById = async (id: string, segmentValueId?: string) => {
+        const result: any = await this.repository.getById(id, segmentValueId);
+        if (!result) throw new ElementNotFoundError(`Pregunta ID-${id} no encontrada en la base de datos.`);
 
-        return question;
+        if (segmentValueId && Array.isArray(result) && result.length > 0 && result[0].questions) {
+            return {
+                question: {
+                    id: result[0].questions.id,
+                    xlsxCode: result[0].questions.xlsxCode,
+                    value: result[0].questions.value,
+                },
+                questionData: result
+                    .filter((row: any) => row.questionData !== null)
+                    .map((row: any) => ({
+                        answerId: row.questionData.answerId,
+                        questionId: row.questionData.questionId,
+                        segmentValueId: row.questionData.segmentValueId,
+                        result: row.questionData.result,
+                        answerValue: row.answers?.value,
+                    }))
+            };
+        }
+
+        return result;
     };
 
     public create = async (question: QuestionNew) => {
@@ -54,13 +73,11 @@ export default class QuestionService {
     };
 
     public update = async (id: string, data: Partial<QuestionNew>): Promise<Question> => {
-        // Validate that the question exists
         const existingQuestion = await this.repository.getById(id);
         if (!existingQuestion || !existingQuestion.length) {
             throw new ElementNotFoundError(`Pregunta ID-${id} no encontrada en la base de datos.`);
         }
 
-        // Validate partial data with insertSchema.partial()
         let parsed;
         try {
             parsed = questionInsertSchema.partial().parse(data);
@@ -75,7 +92,6 @@ export default class QuestionService {
             throw new RuntimeError('No se proporcionaron datos válidos para actualizar.');
         }
 
-        // Remove undefined and null values to match Partial<QuestionNew> type
         const cleanData = Object.entries(parsed).reduce((acc, [key, value]) => {
             if (value !== undefined && value !== null) {
                 acc[key as keyof QuestionNew] = value;
@@ -87,12 +103,19 @@ export default class QuestionService {
         if (!updatedQuestion || !updatedQuestion.length) {
             throw new RuntimeError('Error al actualizar la pregunta.');
         }
-        
+
         return updatedQuestion[0]!;
     };
 
     public pushResponse = async (data: QuestionDataNew) => {
         const newQuestionData = await this.repository.pushResponse(data);
         return newQuestionData;
+    };
+
+    public getAnswersByQuestionId = async (questionId: string) => {
+        const answers = await this.repository.getAnswersByQuestionId(questionId);
+        if (!answers || answers.length === 0) throw new ElementNotFoundError(`No se encontraron respuestas para la pregunta ID-${questionId}.`);
+
+        return { questionId, answers };
     };
 }

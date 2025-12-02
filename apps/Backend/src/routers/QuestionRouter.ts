@@ -8,6 +8,7 @@ export default class QuestionRouter extends BaseRouter {
     init() {
         this.get('/', ['PUBLIC'], controller.getAll);
         this.get('/:id', ['PUBLIC'], controller.getById);
+        this.get('/:id/answers', ['PUBLIC'], controller.getAnswersByQuestionId);
         this.post('/', ['ADMIN'], controller.create);
         this.patch('/:id', ['ADMIN'], controller.update);
         this.post('/push', ['ADMIN'], controller.pushResponse);
