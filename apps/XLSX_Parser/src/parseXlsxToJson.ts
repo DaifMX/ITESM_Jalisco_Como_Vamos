@@ -97,12 +97,12 @@ export default async function parseXlsxToJson(): Promise<{
             }
             
             // Promedio (Total 2024)
-            const aggregate = row?.getCell('C').value;
+            const resultAggregate = row?.getCell('C').value;
             const questionId = questionIdMap[xlsxCode as string];
             answersAggregates.push({
                 questionId,
                 answerId,
-                aggregate
+                result: resultAggregate
             });
 
             // Obtener porcentajes de respuesta
