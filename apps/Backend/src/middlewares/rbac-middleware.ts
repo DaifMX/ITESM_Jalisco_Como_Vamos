@@ -1,5 +1,5 @@
-import { admin } from 'better-auth/plugins';
 import { auth } from "@/lib/auth";
+
 import { fromNodeHeaders } from "better-auth/node";
 
 import type { Request, Response, NextFunction } from "express";
@@ -13,6 +13,8 @@ export function rbacMiddleware(policies: Array<string>) {
             const session = await auth.api.getSession({
                 headers: fromNodeHeaders(req.headers)
             });
+
+            if (!session) return res.sendUnauthorized('Sesión no iniciada.');
 
             const userRole = (session?.user as any).role;
             if (!userRole) return res.sendUnauthorized('Sesión no iniciada.');
