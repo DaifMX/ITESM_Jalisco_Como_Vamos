@@ -69,31 +69,21 @@ export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       // Check if this is a sign-in request
-      if (ctx.path !== "/sign-in/email") {
-        return;
-      }
+      if (ctx.path !== "/sign-in/email") return;
 
       // Check if this request is coming from the Admin Panel
       const isAdminLogin = ctx.headers?.get("x-admin-login") === "true";
-      if (!isAdminLogin) {
-        // Not an admin login request, allow normal flow
-        return;
-      }
+      if (!isAdminLogin) return;
 
-      // Admin login - we'll check the role after authentication in the 'after' hook
     }),
     after: createAuthMiddleware(async (ctx) => {
       // Only check after sign-in
-      if (ctx.path !== "/sign-in/email") {
-        return;
-      }
+      if (ctx.path !== "/sign-in/email") return;
 
       const isAdminLogin = ctx.headers?.get("x-admin-login") === "true";
       
-      if (!isAdminLogin) {
-        // Not an admin login, allow normal flow
-        return;
-      }
+      // Not an admin login, allow normal flow
+      if (!isAdminLogin) return;
 
       // Get the user from the context
       const user = ctx.context.newSession?.user;
