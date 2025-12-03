@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, router } from "expo-router";
+import { useNavigation } from "expo-router";
+import { useRoute } from "@react-navigation/native";
 import useSWR from "swr";
 
 import { authClient } from "@/lib/auth-client";
@@ -19,7 +21,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { VStack } from "@/components/ui/vstack";
 
-import { ArrowLeftIcon, SearchIcon } from "lucide-react-native";
+import { ArrowLeftIcon, Box, HeartIcon, SearchIcon } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export type Session = typeof authClient.$Infer.Session;
@@ -33,7 +35,7 @@ export default function Question() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchBarVal, setSearchBarVal] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    params.categoryId as string || null
+    (params.categoryId as string) || null
   );
 
   useEffect(() => {
@@ -96,7 +98,10 @@ export default function Question() {
               nestedScrollEnabled
             >
               <HStack space="md">
-                <CategoryList selectedCategoryId={selectedCategoryId} setSelectedCategoryId={setSelectedCategoryId} />
+                <CategoryList
+                  selectedCategoryId={selectedCategoryId}
+                  setSelectedCategoryId={setSelectedCategoryId}
+                />
               </HStack>
             </ScrollView>
             <Divider className="bg-black h-[1px]" />
@@ -116,45 +121,71 @@ export default function Question() {
 const QuestionList = ({ categoryId }: { categoryId: string | null }) => {
   const router = useRouter();
 
-  const url = categoryId ? `/api/question?cid=${categoryId}` : '/api/question';
+  const url = categoryId ? `/api/question?cid=${categoryId}` : "/api/question";
   const { data, error, isLoading } = useSWR(url, fetcher);
 
-  if (error) return <ThemedText className="text-red-500">Error al cargar preguntas</ThemedText>
+  if (error)
+    return (
+      <ThemedText className="text-red-500">
+        Error al cargar preguntas
+      </ThemedText>
+    );
 
-  if (isLoading) return <ThemedText>Cargando...</ThemedText>
+  if (isLoading) return <ThemedText>Cargando...</ThemedText>;
 
   if (!data || data.length === 0) {
-    return <ThemedText className="text-gray-500">No hay preguntas en esta categoría</ThemedText>
+    return (
+      <ThemedText className="text-gray-500">
+        No hay preguntas en esta categoría
+      </ThemedText>
+    );
   }
 
-  return (
-    data?.map((c: any) => {
-      return (
-        <BasicElementCard
-          key={c.id}
-          onPress={() => router.push(`/questionData?id=${c.id}`)}
-          text={c.valueShort}
-        />
-      );
-    })
-  );
-}
+  return data?.map((c: any) => {
+    return (
+      <BasicElementCard
+        key={c.id}
+        onPress={() => router.push(`/questionData?id=${c.id}`)}
+        text={c.valueShort}
+      />
+    );
+  });
+};
 
-const CategoryList = ({ selectedCategoryId, setSelectedCategoryId }: { selectedCategoryId: string | null, setSelectedCategoryId: (id: string) => void }) => {
+const CategoryList = ({
+  selectedCategoryId,
+  setSelectedCategoryId,
+}: {
+  selectedCategoryId: string | null;
+  setSelectedCategoryId: (id: string) => void;
+}) => {
   const { data } = useSWR(`api/category`, fetcher);
 
-  return (
-    data?.map((c: any) => {
-      return (
-        <Pressable key={c.id} onPress={() => setSelectedCategoryId(c.id)}>
-          <CategoryCard
-            bgColor={c.color}
-            color={"#FFFFFF"}
-            icon={c.icon}
-            text={c.name}
-          />
-        </Pressable>
-      );
+  const [currentCategory, setCurrentCategory] = useState("");
+  const navigation = useNavigation() as any
+  const route = useRoute()
+
+  const handleOnPress = ({ id }: { id: string }) => {
+    setCurrentCategory(id);
+    navigation
+    /* router.push(`/questions?categoryId=${id}`); */
+    navigation.setParams({
+      categoryId: id
     })
-  );
+  };
+
+  const router = useRouter();
+  return data?.map((c: any) => {
+    return (
+      <CategoryCard
+        bgColor={c.color}
+        color={"#FFFFFF"}
+        icon={c.icon}
+        text={c.name}
+        onPress={() => handleOnPress({ id: c.id })}
+        selected={c.id === currentCategory ? true : false}
+        key={`CategoryMinicard` + c.id}
+      />
+    );
+  });
 };

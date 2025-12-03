@@ -89,6 +89,7 @@ const CategoryList = () => {
 
     if (isLoading) return <ThemedText>Cargando...</ThemedText>
 
+
     return (
         data?.map((c: any) => {
             return (
@@ -97,7 +98,7 @@ const CategoryList = () => {
                     onPress={() => router.push(`/questions?categoryId=${c.id}`)}
                     text={c.name}
                     bgColor={c.color ?? '#000000'}
-                    color="black"
+                    color='white'
                     icon={c.icon ? c.icon : 'Landmark'}
                 />
             );

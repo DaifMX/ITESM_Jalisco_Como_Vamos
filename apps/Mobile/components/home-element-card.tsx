@@ -22,15 +22,13 @@ export const HomeElementCard = ({
   return (
     <Pressable onPress={onPress} className="w-full">
       <Box
-        // className="w-full rounded-xl border px-4 py-3 flex flex-row items-center gap-1"
-        // style={{ height: 70, backgroundColor: 'transparent', borderColor: bgColor }}
-        className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 flex flex-row items-center gap-1"
-        style={{ height: 70, backgroundColor: bgColor }}
+        className="w-full rounded-xl border-2 border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 flex flex-row items-center gap-1"
+        style={{ height: 70, backgroundColor: bgColor, }}
       >
-        <Box className="mt-px">
+        <Box className="mt-px mr-2">
           <Icon name={icon} color={color} size={20} />
         </Box>
-        <ThemedText className="text-base font-semibold" style={{ color }}>
+        <ThemedText className="" style={{ color, fontSize: 19 }}>
           {text}
         </ThemedText>
       </Box>
