@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
     View,
     StyleSheet,
@@ -7,41 +7,53 @@ import {
     Modal,
     TextInput,
     Share,
-    Dimensions,
-    Pressable
+    Pressable,
+    ActivityIndicator
 } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import useSWR from "swr";
 
 import { authClient } from "@/lib/auth-client";
-import { router } from "expo-router";
+import { fetcher } from "@/lib/axios";
 
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
 import { ThemedText } from "@/components/themed-text";
 import { AvatarSection } from "@/components/avatar-section";
-import { PieChart, BarChart } from "react-native-chart-kit";
+import { DynamicPieChart } from "@/components/graphs/DynamicPieChart";
+import { DynamicBarChart } from "@/components/graphs/DynamicBarChart";
 
 import { ArrowLeftIcon } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-
 // ======== Tipos ========
-type Sexo = "Hombre" | "Mujer";
-type CalidadBucket = "1-2" | "3" | "4-5";
+interface QuestionDataItem {
+    answerId: string;
+    questionId: string;
+    segmentValueId: string;
+    result: string;
+    answerValue: string;
+}
 
-const MUNICIPIOS = [
-    "El Salto",
-    "Guadalajara",
-    "Tlaquepaque",
-    "Tlajomulco",
-    "Tonalá",
-    "Zapopan",
-] as const;
-type Municipio = (typeof MUNICIPIOS)[number];
+interface QuestionResponse {
+    question: {
+        id: string;
+        xlsxCode: string;
+        value: string;
+    };
+    questionData: QuestionDataItem[];
+}
 
-interface Row {
-    municipio: Municipio;
-    sexo: Sexo;
-    calidad: number; // 1..5
+interface SegmentValue {
+    id: string;
+    name: string;
+    segmentId: string;
+}
+
+interface Segment {
+    id: string;
+    name: string;
+    values: SegmentValue[];
 }
 
 interface CommentItem {
@@ -51,47 +63,19 @@ interface CommentItem {
     text: string;
 }
 
-// ======== Datos dummy ========
-const SCREEN_WIDTH = Dimensions.get("window").width;
-const CHART_WIDTH = Math.min(SCREEN_WIDTH - 64);
-
-const seed = (n = 300): Row[] => {
-    const rows: Row[] = [];
-    for (let i = 0; i < n; i++) {
-        const municipio = MUNICIPIOS[Math.floor(Math.random() * MUNICIPIOS.length)];
-        const sexo: Sexo = Math.random() < 0.48 ? "Hombre" : "Mujer";
-        const base = MUNICIPIOS.indexOf(municipio) + 1;
-        const calidad = Math.min(
-            5,
-            Math.max(1, Math.round(base + (Math.random() - 0.5) * 2))
-        );
-        rows.push({ municipio, sexo, calidad });
-    }
-    return rows;
-};
-
-const RAW: Row[] = seed(300);
-
-const calidadBucket = (calidad: number): CalidadBucket => {
-    if (calidad <= 2) return "1-2";
-    if (calidad === 3) return "3";
-    return "4-5";
-};
-
-const COLORS: string[] = [
-    "rgb(0, 61, 165)",      // pantone-dark-blue
-    "rgb(243, 112, 33)",    // pantone-orange
-    "rgb(196, 214, 0)",     // pantone-green
-    "rgb(228, 0, 43)",      // pantone-red
-    "rgb(254, 221, 0)",     // pantone-yellow
-    "rgb(153, 179, 214)",   // pantone-light-blue
-];
 
 // ======== Componente principal ========
 export default function QuestionData() {
     const session = authClient.useSession();
-    const [filterSexo, setFilterSexo] = useState<Sexo | "Todos">("Todos");
-    const [filterCalidad, setFilterCalidad] = useState<CalidadBucket | "Todos">("Todos");
+    const params = useLocalSearchParams();
+    const questionId = params.id as string;
+
+    console.log('=== QuestionData Component Mounted ===');
+    console.log('Params:', params);
+    console.log('QuestionId from params:', questionId);
+
+    const [selectedSegmentValue, setSelectedSegmentValue] = useState<string | null>(null);
+    const [promedioSegmentValueId, setPromedioSegmentValueId] = useState<string | null>(null);
     const [filterOpen, setFilterOpen] = useState<boolean>(false);
     const [comment, setComment] = useState<string>("");
 
@@ -104,85 +88,84 @@ export default function QuestionData() {
         },
     ]);
 
-    const filtered: Row[] = useMemo(() => {
-        return RAW.filter((r) => {
-            const okSexo = filterSexo === "Todos" || r.sexo === filterSexo;
-            const okCalidad =
-                filterCalidad === "Todos" || calidadBucket(r.calidad) === filterCalidad;
-            return okSexo && okCalidad;
+    // Fetch segments with values to find "Promedio"
+    const segmentsUrl = '/api/segment/with-values';
+    console.log('Segments URL:', segmentsUrl);
+
+    const { data: segmentsData } = useSWR<Segment[]>(
+        segmentsUrl,
+        fetcher
+    );
+
+    console.log('Segments data received:', segmentsData);
+
+    // Set "Promedio" as default segmentValue on mount
+    useEffect(() => {
+        console.log('Segments data:', segmentsData);
+        if (segmentsData && !promedioSegmentValueId) {
+            // Find "Promedio" segment value across all segments
+            for (const segment of segmentsData) {
+                const promedioValue = segment.values.find(
+                    (v) => v.name.toLowerCase() === "promedio"
+                );
+                if (promedioValue) {
+                    console.log('Found Promedio:', promedioValue.id);
+                    setPromedioSegmentValueId(promedioValue.id);
+                    setSelectedSegmentValue(promedioValue.id);
+                    break;
+                }
+            }
+        }
+    }, [segmentsData, promedioSegmentValueId]);
+
+    // Fetch question data with optional segment filter
+    // Don't fetch until we have questionId and selectedSegmentValue is set
+    const shouldFetch = questionId && selectedSegmentValue;
+    console.log('QuestionId:', questionId, 'SelectedSegmentValue:', selectedSegmentValue, 'ShouldFetch:', shouldFetch);
+
+    const fetchUrl = shouldFetch
+        ? `/api/question/${questionId}?segmentValueId=${selectedSegmentValue}`
+        : null;
+    console.log('Fetch URL:', fetchUrl);
+
+    const { data, error, isLoading } = useSWR<QuestionResponse>(
+        fetchUrl,
+        fetcher
+    );
+
+    // ---- Procesar datos para gráficas
+    const chartData = useMemo(() => {
+        if (!data?.questionData) return [];
+
+        return data.questionData.map(item => {
+            const val = parseFloat(item.result);
+            return {
+                name: item.answerValue,
+                // Fallback to 0 if NaN
+                value: isNaN(val) ? 0 : val * 100,
+                label: item.answerValue,
+            };
         });
-    }, [filterSexo, filterCalidad]);
+    }, [data]);
 
-    // ---- Datos para gráficas
-    const porMunicipioPie = useMemo(() => {
-        const counts = Object.fromEntries(MUNICIPIOS.map((m) => [m, 0])) as Record<
-            Municipio,
-            number
-        >;
-        filtered.forEach((r) => counts[r.municipio]++);
-        return (Object.entries(counts) as [Municipio, number][]).map(
-            ([name, population], i) => ({
-                name,
-                population,
-                color: COLORS[i % COLORS.length],
-                legendFontColor: "rgb(0, 61, 165)",
-                legendFontSize: 12,
-            })
-        );
-    }, [filtered]);
-
-    const porSexoPie = useMemo(() => {
-        const h = filtered.filter((r) => r.sexo === "Hombre").length;
-        const m = filtered.filter((r) => r.sexo === "Mujer").length;
-        return [
-            {
-                name: "Hombre",
-                population: h,
-                color: COLORS[0],
-                legendFontColor: "rgb(0, 61, 165)",
-                legendFontSize: 12,
-            },
-            {
-                name: "Mujer",
-                population: m,
-                color: COLORS[1],
-                legendFontColor: "rgb(0, 61, 165)",
-                legendFontSize: 12,
-            },
-        ];
-    }, [filtered]);
-
-    const calidadBar = useMemo(() => {
-        const buckets = ["1-2", "3", "4-5"].map((k) => ({ x: String(k), y: 0 }));
-        filtered.forEach((r) => {
-            const index = r.calidad <= 2 ? 0 : r.calidad === 3 ? 1 : 2;
-            buckets[index].y += 1;
-        });
-        return {
-            labels: buckets.map((b) => b.x),
-            datasets: [{ data: buckets.map((b) => b.y) }],
-        };
-    }, [filtered]);
-
-    const total = filtered.length;
+    const total = useMemo(() => {
+        if (!data?.questionData) return 0;
+        return data.questionData.reduce((sum, item) => sum + parseFloat(item.result) * 100, 0);
+    }, [data]);
 
     const exportJSON = async () => {
+        if (!data) return;
+
         const payload = {
             metadata: {
-                total,
-                filtros: { sexo: filterSexo, calidad: filterCalidad },
+                questionId,
+                questionText: data.question.value,
+                segmentValueId: selectedSegmentValue,
+                total: total.toFixed(1),
             },
-            porMunicipio: porMunicipioPie.map(({ name, population }) => ({
-                name,
-                value: population,
-            })),
-            porSexo: porSexoPie.map(({ name, population }) => ({
-                name,
-                value: population,
-            })),
-            histCalidad: calidadBar.labels.map((lab, i) => ({
-                calidad: lab,
-                value: calidadBar.datasets[0].data[i],
+            data: chartData.map(({ name, value }) => ({
+                answer: name,
+                percentage: value.toFixed(1),
             })),
         };
         await Share.share({ message: JSON.stringify(payload, null, 2) });
@@ -203,21 +186,30 @@ export default function QuestionData() {
     };
 
     const clearFilters = () => {
-        setFilterSexo("Todos");
-        setFilterCalidad("Todos");
+        setSelectedSegmentValue(promedioSegmentValueId);
     };
 
-    const chartConfig = {
-        backgroundGradientFrom: "rgb(251, 251, 251)",
-        backgroundGradientTo: "rgb(251, 251, 251)",
-        decimalPlaces: 0,
-        color: (opacity = 1) => `rgba(0, 61, 165, ${opacity})`,
-        labelColor: () => "rgb(0, 61, 165)",
-        propsForLabels: { fontSize: 11 },
-        propsForBackgroundLines: { stroke: "rgb(153, 179, 214)" },
-        fillShadowGradient: COLORS[0],
-        fillShadowGradientOpacity: 1,
-    };
+    if (isLoading) {
+        return (
+            <SafeAreaView className="flex-1 bg-white items-center justify-center">
+                <ActivityIndicator size="large" color="rgb(0, 61, 165)" />
+                <Text className="mt-4 text-pantone-dark-blue">Cargando datos...</Text>
+            </SafeAreaView>
+        );
+    }
+
+    if (error || !data) {
+        return (
+            <SafeAreaView className="flex-1 bg-white items-center justify-center p-8">
+                <Text className="text-pantone-red text-center text-lg">
+                    Error al cargar los datos
+                </Text>
+                <Button onPress={() => router.back()} className="mt-4 bg-pantone-dark-blue rounded-xl">
+                    <ButtonText className="text-white">Volver</ButtonText>
+                </Button>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView className="flex-1 bg-white">
@@ -226,7 +218,7 @@ export default function QuestionData() {
                     <Pressable onPress={() => router.back()}>
                         <ArrowLeftIcon size={40} />
                     </Pressable>
-                    <ThemedText type="title">Descripción</ThemedText>
+                    <ThemedText type="title">{data.question.xlsxCode}</ThemedText>
                     <AvatarSection
                         user={session.data?.user}
                         handleMyAccount={() => router.push('/my-account')}
@@ -235,6 +227,7 @@ export default function QuestionData() {
                         handleSignOut={() => { authClient.signOut(); router.push('/login') }}
                     />
                 </View>
+                <Text style={styles.questionText}>{data.question.value}</Text>
                 <View style={styles.headerButtons}>
                     <Button onPress={exportJSON} className="bg-pantone-orange rounded-xl">
                         <ButtonText className="text-white">
@@ -251,47 +244,19 @@ export default function QuestionData() {
 
             <ScrollView contentContainerStyle={styles.scroll}>
                 <Card
-                    title="Distribución por municipio"
-                    subtitle={`${total} respuestas`}
+                    title="Distribución de respuestas"
+                    subtitle={`Total: ${total.toFixed(1)}%`}
                 >
-                    <PieChart
-                        data={porMunicipioPie}
-                        width={CHART_WIDTH}
+                    <DynamicPieChart
+                        data={chartData}
                         height={240}
-                        accessor="population"
-                        backgroundColor="transparent"
-                        paddingLeft="16"
-                        chartConfig={chartConfig}
-                        hasLegend
-                        center={[0, 0]}
                     />
                 </Card>
 
-                <Card title="Distribución por sexo">
-                    <PieChart
-                        data={porSexoPie}
-                        width={CHART_WIDTH}
-                        height={220}
-                        accessor="population"
-                        backgroundColor="transparent"
-                        paddingLeft="16"
-                        chartConfig={chartConfig}
-                        hasLegend
-                        center={[0, 0]}
-                    />
-                </Card>
-
-                <Card title="Calidad de vida (1 a 5)">
-                    <BarChart
-                        data={calidadBar}
-                        width={CHART_WIDTH}
+                <Card title="Respuestas">
+                    <DynamicBarChart
+                        data={chartData}
                         height={260}
-                        fromZero
-                        showValuesOnTopOfBars
-                        yAxisLabel="" // <- requerido por typings de algunas versiones
-                        yAxisSuffix="" // <- idem
-                        chartConfig={chartConfig}
-                        style={{ borderRadius: 12 }}
                     />
                 </Card>
 
@@ -338,7 +303,7 @@ export default function QuestionData() {
                 <View style={styles.modalWrap}>
                     <View style={styles.modalCard}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Filtros</Text>
+                            <Text style={styles.modalTitle}>Filtros por segmento</Text>
                             <Button
                                 variant="outline"
                                 onPress={clearFilters}
@@ -350,35 +315,33 @@ export default function QuestionData() {
                             </Button>
                         </View>
 
-                        <View style={{ gap: 16 }}>
-                            <View>
-                                <Text style={styles.filterTitle}>Calidad de vida</Text>
-                                <View style={styles.chipRow}>
-                                    {(["1-2", "3", "4-5", "Todos"] as const).map((key) => (
-                                        <Chip
-                                            key={key}
-                                            label={key}
-                                            active={filterCalidad === key}
-                                            onPress={() => setFilterCalidad(key)}
-                                        />
-                                    ))}
-                                </View>
+                        <ScrollView style={{ maxHeight: 400 }}>
+                            <View style={{ gap: 16 }}>
+                                {segmentsData?.map((segment) => (
+                                    <View key={segment.id}>
+                                        <Text style={styles.filterTitle}>{segment.name}</Text>
+                                        <View style={styles.chipRow}>
+                                            <Chip
+                                                label="Promedio"
+                                                active={selectedSegmentValue === promedioSegmentValueId}
+                                                onPress={() => setSelectedSegmentValue(promedioSegmentValueId)}
+                                            />
+                                            {segment.values
+                                                .filter(v => v.name.toLowerCase() !== "promedio")
+                                                .map((value) => (
+                                                    <Chip
+                                                        key={value.id}
+                                                        label={value.name}
+                                                        active={selectedSegmentValue === value.id}
+                                                        onPress={() => setSelectedSegmentValue(value.id)}
+                                                    />
+                                                ))}
+                                        </View>
+                                    </View>
+                                ))}
                             </View>
+                        </ScrollView>
 
-                            <View>
-                                <Text style={styles.filterTitle}>Sexo</Text>
-                                <View style={styles.chipRow}>
-                                    {(["Hombre", "Mujer", "Todos"] as const).map((key) => (
-                                        <Chip
-                                            key={key}
-                                            label={key}
-                                            active={filterSexo === key}
-                                            onPress={() => setFilterSexo(key)}
-                                        />
-                                    ))}
-                                </View>
-                            </View>
-                        </View>
                         <Button variant="outline" onPress={() => setFilterOpen(false)} className="border-pantone-light-blue rounded-xl">
                             <ButtonText className="text-pantone-dark-blue">
                                 Cerrar
@@ -439,6 +402,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgb(255, 255, 255)",
     },
     title: { fontSize: 18, fontWeight: "700", color: "#000" },
+    questionText: { fontSize: 16, color: "#444", marginTop: 8 },
     headerButtons: { flexDirection: "row", gap: 8, marginTop: 8 },
     scroll: { padding: 16, gap: 16 },
     card: {
