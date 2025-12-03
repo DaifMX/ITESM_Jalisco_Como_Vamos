@@ -23,7 +23,7 @@ import { AvatarSection } from "@/components/avatar-section";
 import { DynamicPieChart } from "@/components/graphs/DynamicPieChart";
 import { DynamicBarChart } from "@/components/graphs/DynamicBarChart";
 
-import { ArrowLeftIcon } from "lucide-react-native";
+import { ArrowLeftIcon, PieChartIcon, BarChart3Icon } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ======== Tipos ========
@@ -78,6 +78,7 @@ export default function QuestionData() {
     const [promedioSegmentValueId, setPromedioSegmentValueId] = useState<string | null>(null);
     const [filterOpen, setFilterOpen] = useState<boolean>(false);
     const [comment, setComment] = useState<string>("");
+    const [chartType, setChartType] = useState<"pie" | "bar">("pie");
 
     const [comments, setComments] = useState<CommentItem[]>([
         {
@@ -247,17 +248,40 @@ export default function QuestionData() {
                     title="Distribución de respuestas"
                     subtitle={`Total: ${total.toFixed(1)}%`}
                 >
-                    <DynamicPieChart
-                        data={chartData}
-                        height={240}
-                    />
-                </Card>
+                    <View style={styles.chartToggleContainer}>
+                        <Button
+                            onPress={() => setChartType("pie")}
+                            className={chartType === "pie" ? "bg-pantone-dark-blue" : "bg-gray-300"}
+                            style={styles.toggleButton}
+                        >
+                            <PieChartIcon 
+                                size={20} 
+                                color={chartType === "pie" ? "#ffffff" : "#6b7280"} 
+                            />
+                        </Button>
+                        <Button
+                            onPress={() => setChartType("bar")}
+                            className={chartType === "bar" ? "bg-pantone-dark-blue" : "bg-gray-300"}
+                            style={styles.toggleButton}
+                        >
+                            <BarChart3Icon 
+                                size={20} 
+                                color={chartType === "bar" ? "#ffffff" : "#6b7280"} 
+                            />
+                        </Button>
+                    </View>
 
-                <Card title="Respuestas">
-                    <DynamicBarChart
-                        data={chartData}
-                        height={260}
-                    />
+                    {chartType === "pie" ? (
+                        <DynamicPieChart
+                            data={chartData}
+                            height={240}
+                        />
+                    ) : (
+                        <DynamicBarChart
+                            data={chartData}
+                            height={260}
+                        />
+                    )}
                 </Card>
 
                 {/* Comentarios */}
@@ -500,4 +524,15 @@ const styles = StyleSheet.create({
     chipText: { color: "rgb(0, 61, 165)" },
     chipTextActive: { color: "rgb(255, 255, 255)" },
     modalFooter: { flexDirection: "row", justifyContent: "flex-end", gap: 8 },
+    chartToggleContainer: {
+        flexDirection: "row",
+        gap: 8,
+        marginBottom: 16,
+        justifyContent: "flex-start",
+    },
+    toggleButton: {
+        borderRadius: 12,
+        minWidth: 48,
+        paddingHorizontal: 12,
+    },
 });

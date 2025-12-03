@@ -48,8 +48,6 @@ classDiagram
         - createdAt : Date
         - updatedAt : Date
     }
-
-    %% Versión normalizada de XLSX a SQL
     
     Question"1" <--"*" Comment : has many
     Question"*" <-- "1" QuestionData : through
@@ -96,11 +94,6 @@ classDiagram
         - id : string [PK]
         - name : string
         - segmentId : string [FK]
-    }
-
-    class Result {
-        - id : string [PK]
-        - value : float
     }
 
     class Comment {
