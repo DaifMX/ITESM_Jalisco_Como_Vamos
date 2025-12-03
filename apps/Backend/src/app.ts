@@ -10,6 +10,7 @@ import { auth } from '@/lib/auth';
 
 import AnswerRouter from '@/routers/AnswerRouter';
 import CategoryRouter from '@/routers/CategoryRouter';
+import CommentRouter from '@/routers/CommentRouter';
 import QuestionRouter from '@/routers/QuestionRouter';
 import SegmentRouter from '@/routers/SegmentRouter';
 import SystemRouter from '@/routers/SystemRouter';
@@ -38,6 +39,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routers
 app.use('/api/answer', new AnswerRouter().getRouter());
 app.use('/api/category', new CategoryRouter().getRouter());
+app.use('/api/comment', new CommentRouter().getRouter());
 app.use('/api/question', new QuestionRouter().getRouter());
 app.use('/api/segment', new SegmentRouter().getRouter());
 app.use('/api/sys', new SystemRouter().getRouter());

@@ -8,6 +8,7 @@ export default db;
 export * from "@/db/schema/answers";
 export * from "@/db/schema/categories";
 export * from "@/db/schema/comments";
+export * from "@/db/schema/commentLikes";
 export * from "@/db/schema/questionData";
 export * from "@/db/schema/questions";
 export * from "@/db/schema/segments";

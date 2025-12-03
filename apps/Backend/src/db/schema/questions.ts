@@ -2,7 +2,7 @@ import { pgTable, uuid, text } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
-import { categories, questionData } from '@/db/schema';
+import { categories, comments, questionData } from '@/db/schema';
 
 export const questions = pgTable('questions', {
     id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -18,6 +18,7 @@ export const questionRelations = relations(questions, ({ one, many }) => ({
         references: [categories.id],
     }),
     questionData: many(questionData),
+    comments: many(comments)
 }));
 
 export const questionSelectSchema = createSelectSchema(questions);

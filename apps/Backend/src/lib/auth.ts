@@ -7,6 +7,7 @@ import { expo } from "@better-auth/expo";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
 import db, { accounts, users, verifications, sessions, twoFactors } from "@/db/schema";
+import CommentRepository from "@/repositories/CommentRepository";
 
 import getTrustedOrigins from "@/utils/getTrustedOrigins";
 
@@ -17,16 +18,16 @@ export const auth = betterAuth({
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
     },
   },
   advanced: {
     cookiePrefix: "better-auth",
     crossSubDomainCookies: {
-      enabled: false, // Disable for Expo OAuth - causes state mismatch
+      enabled: false,
     },
     defaultCookieAttributes: {
-      sameSite: "lax", // Changed from "none" - required for OAuth callback to work
+      sameSite: "lax",
       secure: true,
     },
     useSecureCookies: false,
@@ -101,5 +102,17 @@ export const auth = betterAuth({
         });
       }
     }),
+  },
+  databaseHooks: {
+    user: {
+      delete: {
+        before: async (user) => {
+          const commentRepository = new CommentRepository();
+          await commentRepository.deleteAllByUserId(user.id);
+          
+          return true;
+        }
+      },
+    },
   },
 });
