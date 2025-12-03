@@ -1,5 +1,7 @@
 import CommentService from "@/services/CommentService";
+import { auth } from "@/lib/auth";
 
+import { fromNodeHeaders } from "better-auth/node";
 import { ElementNotFoundError, RuntimeError, ValidationError } from "@jcv/errors";
 
 import type { Request, Response } from "express";
@@ -14,11 +16,17 @@ export default class CommentController {
     public create = async (req: Request, res: Response) => {
         try {
             const { msgContent, questionId } = req.body;
-            const userId = (req as any).session?.user?.id;
 
-            if (!userId) {
+            // Obtener sesión usando Better Auth
+            const session = await auth.api.getSession({
+                headers: fromNodeHeaders(req.headers)
+            });
+
+            if (!session?.user?.id) {
                 throw new RuntimeError('Usuario no autenticado.');
             }
+
+            const userId = session.user.id;
 
             if (!msgContent || !questionId) {
                 throw new ValidationError('Contenido del mensaje y ID de pregunta son requeridos.');
@@ -48,7 +56,14 @@ export default class CommentController {
                 throw new ValidationError('ID de pregunta requerido.');
             }
 
-            const comments = await this.service.getByQuestionId(questionId);
+            // Obtener sesión para saber si el usuario ha dado like
+            const session = await auth.api.getSession({
+                headers: fromNodeHeaders(req.headers)
+            });
+
+            const userId = session?.user?.id || null;
+
+            const comments = await this.service.getByQuestionId(questionId, userId);
             return res.sendSuccess(comments);
 
         } catch (err: any) {
@@ -66,11 +81,17 @@ export default class CommentController {
     public deleteOwn = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const userId = (req as any).session?.user?.id;
 
-            if (!userId) {
+            // Obtener sesión usando Better Auth
+            const session = await auth.api.getSession({
+                headers: fromNodeHeaders(req.headers)
+            });
+
+            if (!session?.user?.id) {
                 throw new RuntimeError('Usuario no autenticado.');
             }
+
+            const userId = session.user.id;
 
             if (!id) {
                 throw new ValidationError('ID de comentario requerido.');
@@ -118,11 +139,17 @@ export default class CommentController {
     public toggleLike = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const userId = (req as any).session?.user?.id;
 
-            if (!userId) {
+            // Obtener sesión usando Better Auth
+            const session = await auth.api.getSession({
+                headers: fromNodeHeaders(req.headers)
+            });
+
+            if (!session?.user?.id) {
                 throw new RuntimeError('Usuario no autenticado.');
             }
+
+            const userId = session.user.id;
 
             if (!id) {
                 throw new ValidationError('ID de comentario requerido.');
@@ -148,14 +175,20 @@ export default class CommentController {
     public getLikeStatus = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const userId = (req as any).session?.user?.id;
+
+            // Obtener sesión usando Better Auth (opcional para este endpoint)
+            const session = await auth.api.getSession({
+                headers: fromNodeHeaders(req.headers)
+            });
+
+            const userId = session?.user?.id || null;
 
             if (!id) {
                 throw new ValidationError('ID de comentario requerido.');
             }
 
             const status = await this.service.getLikeStatus(id, userId);
-            return res.sendSuccess(status);
+            return res.sendSuccess({ status });
 
         } catch (err: any) {
             if (err instanceof ValidationError) return res.sendBadRequest(err.message);

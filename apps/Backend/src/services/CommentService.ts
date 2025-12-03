@@ -26,13 +26,26 @@ export default class CommentService {
     /**
      * Obtener todos los comentarios de una pregunta con likes
      */
-    public getByQuestionId = async (questionId: string) => {
+    public getByQuestionId = async (questionId: string, userId: string | null = null) => {
         if (!questionId) {
             throw new ValidationError('ID de pregunta requerido.');
         }
 
         const comments = await this.repository.getByQuestionId(questionId);
-        return comments;
+        
+        // Si hay userId, agregar información de hasLiked para cada comentario
+        if (userId) {
+            const commentsWithLikeStatus = await Promise.all(
+                comments.map(async (comment) => {
+                    const hasLiked = await this.repository.hasUserLiked(comment.id, userId);
+                    return { ...comment, hasLiked };
+                })
+            );
+            return commentsWithLikeStatus;
+        }
+
+        // Si no hay userId, agregar hasLiked: false a todos
+        return comments.map(comment => ({ ...comment, hasLiked: false }));
     };
 
     /**
@@ -111,7 +124,9 @@ export default class CommentService {
     /**
      * Obtener si el usuario dio like y el total de likes
      */
-    public getLikeStatus = async (commentId: string, userId: string) => {
+    public getLikeStatus = async (commentId: string, userId: string | null) => {
+        if (userId === null) return false;
+
         if (!commentId) {
             throw new ValidationError('ID de comentario requerido.');
         }

@@ -35,6 +35,7 @@ export default function MyAccount() {
     const session = authClient.useSession();
 
     const [isLoading, setIsLoading] = useState(false);
+    const [isCheckingProvider, setIsCheckingProvider] = useState(true);
     const [isSocialProviderSession, setIsSocialProviderSession] = useState(true);
     const [dialog, setDialog] = useState<DialogState>({ type: 'none' });
     const [secret2FA, setSecret2FA] = useState('');
@@ -44,9 +45,21 @@ export default function MyAccount() {
 
         const checkProvider = async () => {
             try {
+                setIsCheckingProvider(true);
                 const result = await isUsingSocialProvider();
-                if (isMounted) setIsSocialProviderSession(result);
-            } catch { }
+                if (isMounted) {
+                    setIsSocialProviderSession(result);
+                }
+            } catch {
+                // Default to credential provider on error
+                if (isMounted) {
+                    setIsSocialProviderSession(false);
+                }
+            } finally {
+                if (isMounted) {
+                    setIsCheckingProvider(false);
+                }
+            }
         };
 
         checkProvider();
@@ -230,19 +243,23 @@ export default function MyAccount() {
                             <View className="flex">
                                 <Button
                                     className="flex flex-row my-3 h-14 bg-[#F5F5F5] data-[active=true]:bg-[#b2a8a8] justify-start p-2 rounded-lg items-center"
-                                    isDisabled={isSocialProviderSession}
+                                    isDisabled={isSocialProviderSession || isCheckingProvider}
                                     onPress={handleChangePassword_Btn}
                                 >
                                     <ButtonIcon as={RectangleEllipsisIcon} className='w-7 h-7 mr-2 color-black data-[active=true]:color-white' />
-                                    <ButtonText className='color-black data-[active=true]:color-black'>Cambiar contraseña</ButtonText>
+                                    <ButtonText className='color-black data-[active=true]:color-black'>
+                                        {isCheckingProvider ? 'Cargando...' : 'Cambiar contraseña'}
+                                    </ButtonText>
                                 </Button>
                                 <Button
                                     className="flex flex-row my-3 h-14 bg-[#F5F5F5] data-[active=true]:bg-[#b2a8a8] justify-start p-2 rounded-lg items-center"
-                                    isDisabled={isSocialProviderSession}
+                                    isDisabled={isSocialProviderSession || isCheckingProvider}
                                     onPress={handleAdd2FA_Btn}
                                 >
                                     <ButtonIcon as={KeyRoundIcon} className='w-7 h-7 mr-2 color-black data-[active=true]:color-white' />
-                                    <ButtonText className='color-black data-[active=true]:color-black'>Habilitar doble factor</ButtonText>
+                                    <ButtonText className='color-black data-[active=true]:color-black'>
+                                        {isCheckingProvider ? 'Cargando...' : 'Habilitar doble factor'}
+                                    </ButtonText>
                                 </Button>
                             </View>
                             <View>

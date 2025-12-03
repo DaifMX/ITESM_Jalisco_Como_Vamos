@@ -14,7 +14,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import useSWR from "swr";
 
 import { authClient } from "@/lib/auth-client";
-import { fetcher } from "@/lib/axios";
+import axiosInstance, { fetcher } from "@/lib/axios";
 
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
@@ -23,7 +23,7 @@ import { AvatarSection } from "@/components/avatar-section";
 import { DynamicPieChart } from "@/components/graphs/DynamicPieChart";
 import { DynamicBarChart } from "@/components/graphs/DynamicBarChart";
 
-import { ArrowLeftIcon, PieChartIcon, BarChart3Icon } from "lucide-react-native";
+import { ArrowLeftIcon, PieChartIcon, BarChart3Icon, HeartIcon } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ======== Tipos ========
@@ -57,10 +57,13 @@ interface Segment {
 }
 
 interface CommentItem {
-    id: number;
-    author: string;
-    time: string;
-    text: string;
+    id: string;
+    msgContent: string;
+    userId: string;
+    userName: string;
+    createdAt: string;
+    likesCount: number;
+    hasLiked: boolean;
 }
 
 
@@ -70,39 +73,23 @@ export default function QuestionData() {
     const params = useLocalSearchParams();
     const questionId = params.id as string;
 
-    console.log('=== QuestionData Component Mounted ===');
-    console.log('Params:', params);
-    console.log('QuestionId from params:', questionId);
-
     const [selectedSegmentValue, setSelectedSegmentValue] = useState<string | null>(null);
     const [promedioSegmentValueId, setPromedioSegmentValueId] = useState<string | null>(null);
     const [filterOpen, setFilterOpen] = useState<boolean>(false);
     const [comment, setComment] = useState<string>("");
     const [chartType, setChartType] = useState<"pie" | "bar">("pie");
-
-    const [comments, setComments] = useState<CommentItem[]>([
-        {
-            id: 1,
-            author: "Jaime Rodriguez",
-            time: "hace 10 meses",
-            text: "¡Por fin un sitio que no solo muestra datos, sino que los hace comprensibles! Ideal para ciudadanos curiosos como yo.",
-        },
-    ]);
+    const [isSubmittingComment, setIsSubmittingComment] = useState<boolean>(false);
 
     // Fetch segments with values to find "Promedio"
     const segmentsUrl = '/api/segment/with-values';
-    console.log('Segments URL:', segmentsUrl);
 
     const { data: segmentsData } = useSWR<Segment[]>(
         segmentsUrl,
         fetcher
     );
 
-    console.log('Segments data received:', segmentsData);
-
     // Set "Promedio" as default segmentValue on mount
     useEffect(() => {
-        console.log('Segments data:', segmentsData);
         if (segmentsData && !promedioSegmentValueId) {
             // Find "Promedio" segment value across all segments
             for (const segment of segmentsData) {
@@ -110,7 +97,6 @@ export default function QuestionData() {
                     (v) => v.name.toLowerCase() === "promedio"
                 );
                 if (promedioValue) {
-                    console.log('Found Promedio:', promedioValue.id);
                     setPromedioSegmentValueId(promedioValue.id);
                     setSelectedSegmentValue(promedioValue.id);
                     break;
@@ -122,15 +108,20 @@ export default function QuestionData() {
     // Fetch question data with optional segment filter
     // Don't fetch until we have questionId and selectedSegmentValue is set
     const shouldFetch = questionId && selectedSegmentValue;
-    console.log('QuestionId:', questionId, 'SelectedSegmentValue:', selectedSegmentValue, 'ShouldFetch:', shouldFetch);
 
     const fetchUrl = shouldFetch
         ? `/api/question/${questionId}?segmentValueId=${selectedSegmentValue}`
         : null;
-    console.log('Fetch URL:', fetchUrl);
 
     const { data, error, isLoading } = useSWR<QuestionResponse>(
         fetchUrl,
+        fetcher
+    );
+
+    // Fetch comments for this question
+    const commentsUrl = questionId ? `/api/comment/question/${questionId}` : null;
+    const { data: commentsData, error: commentsError, mutate: mutateComments } = useSWR<CommentItem[]>(
+        commentsUrl,
         fetcher
     );
 
@@ -172,18 +163,74 @@ export default function QuestionData() {
         await Share.share({ message: JSON.stringify(payload, null, 2) });
     };
 
-    const addComment = () => {
+    const addComment = async () => {
         if (!comment.trim()) return;
-        setComments((prev) => [
-            ...prev,
-            {
-                id: prev.length + 1,
-                author: "Tú",
-                time: "justo ahora",
-                text: comment.trim(),
-            },
-        ]);
-        setComment("");
+        if (!session.data?.user) {
+            alert('Debes iniciar sesión para comentar');
+            return;
+        }
+        
+        setIsSubmittingComment(true);
+        try {
+            await axiosInstance.post('/api/comment', {
+                msgContent: comment.trim(),
+                questionId: questionId,
+                userId: session.data.user.id
+            });
+
+            setComment("");
+            // Revalidar comentarios
+            mutateComments();
+        } catch (error) {
+            alert('Error al agregar comentario');
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    const deleteComment = async (commentId: string) => {
+        if (!session.data?.user) return;
+        
+        try {
+            await axiosInstance.delete(`/api/comment/${commentId}`);
+
+            // Revalidar comentarios
+            mutateComments();
+        } catch (error) {
+            alert('Error al eliminar comentario');
+        }
+    };
+
+    const toggleLike = async (commentId: string) => {
+        if (!session.data?.user) {
+            alert('Debes iniciar sesión para dar like');
+            return;
+        }
+        
+        try {
+            await axiosInstance.post(`/api/comment/${commentId}/like`);
+
+            // Revalidar comentarios para actualizar el estado de likes
+            mutateComments();
+        } catch (error) {
+            alert('Error al dar like');
+        }
+    };
+
+    const formatTimeAgo = (dateString: string): string => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        const diffMonths = Math.floor(diffMs / 2592000000);
+        
+        if (diffMins < 1) return 'justo ahora';
+        if (diffMins < 60) return `hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+        if (diffHours < 24) return `hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+        if (diffDays < 30) return `hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        return `hace ${diffMonths} mes${diffMonths > 1 ? 'es' : ''}`;
     };
 
     const clearFilters = () => {
@@ -290,32 +337,81 @@ export default function QuestionData() {
                     <View style={styles.inputRow}>
                         <TextInput
                             style={styles.input}
-                            placeholder="Agrega un comentario…"
+                            placeholder={session.data?.user ? "Agrega un comentario…" : "Inicia sesión para comentar"}
                             value={comment}
                             onChangeText={setComment}
                             multiline
+                            editable={!!session.data?.user && !isSubmittingComment}
                         />
-                        <Button onPress={addComment} className="bg-pantone-dark-blue rounded-xl">
+                        <Button 
+                            onPress={addComment} 
+                            className="bg-pantone-dark-blue rounded-xl"
+                            disabled={isSubmittingComment || !session.data?.user}
+                        >
                             <ButtonText className="text-white">
-                                Compartir
+                                {isSubmittingComment ? 'Enviando...' : 'Compartir'}
                             </ButtonText>
                         </Button>
                     </View>
-                    {comments.map((c) => (
+                    {commentsError && (
+                        <Text style={{ color: 'rgb(220, 38, 38)', textAlign: 'center' }}>
+                            Error al cargar comentarios
+                        </Text>
+                    )}
+                    {!commentsData && !commentsError && (
+                        <ActivityIndicator size="small" color="rgb(0, 61, 165)" />
+                    )}
+                    {commentsData && commentsData.length === 0 && (
+                        <Text style={{ textAlign: 'center', color: 'rgb(153, 179, 214)', marginTop: 16 }}>
+                            No hay comentarios aún. ¡Sé el primero en comentar!
+                        </Text>
+                    )}
+                    {commentsData?.map((c) => (
                         <View key={c.id} style={styles.comment}>
                             <View style={styles.avatar}>
                                 <Text style={styles.avatarText}>
-                                    {c.author.charAt(0).toUpperCase()}
+                                    {c.userName ? c.userName.charAt(0).toUpperCase() : 'U'}
                                 </Text>
                             </View>
                             <View style={styles.commentBody}>
-                                <Text style={styles.commentMeta}>
-                                    <Text style={{ fontWeight: "600", color: "#000" }}>
-                                        {c.author}
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Text style={styles.commentMeta}>
+                                        <Text style={{ fontWeight: "600", color: "#000" }}>
+                                            {c.userId === session.data?.user?.id ? 'Tú' : (c.userName || 'Usuario')}
+                                        </Text>
+                                        <Text> · {formatTimeAgo(c.createdAt)}</Text>
                                     </Text>
-                                    <Text> · {c.time}</Text>
-                                </Text>
-                                <Text style={styles.commentText}>{c.text}</Text>
+                                    {c.userId === session.data?.user?.id && (
+                                        <TouchableOpacity onPress={() => deleteComment(c.id)}>
+                                            <Text style={{ color: 'rgb(220, 38, 38)', fontSize: 12 }}>Eliminar</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                                <Text style={styles.commentText}>{c.msgContent}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 4 }}>
+                                    <TouchableOpacity 
+                                        onPress={() => toggleLike(c.id)}
+                                        style={{ 
+                                            flexDirection: 'row', 
+                                            alignItems: 'center', 
+                                            gap: 4,
+                                            padding: 4,
+                                        }}
+                                    >
+                                        <HeartIcon 
+                                            size={18} 
+                                            color={c.hasLiked ? "rgb(220, 38, 38)" : "rgb(153, 179, 214)"}
+                                            fill={c.hasLiked ? "rgb(220, 38, 38)" : "none"}
+                                        />
+                                        <Text style={{ 
+                                            fontSize: 14, 
+                                            color: c.hasLiked ? "rgb(220, 38, 38)" : "rgb(153, 179, 214)",
+                                            fontWeight: c.hasLiked ? '600' : '400'
+                                        }}>
+                                            {c.likesCount}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
                         </View>
                     ))}

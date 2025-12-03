@@ -1,5 +1,5 @@
 import { eq, and, desc, sql } from "drizzle-orm";
-import db, { comments, commentLikes } from "@/db/schema";
+import db, { comments, commentLikes, users } from "@/db/schema";
 
 export default class CommentRepository {
     private db = db;
@@ -28,10 +28,15 @@ export default class CommentRepository {
                 msgContent: this.commentModel.msgContent,
                 questionId: this.commentModel.questionId,
                 userId: this.commentModel.userId,
+                userName: users.name,
                 createdAt: this.commentModel.createdAt,
                 likesCount: sql<number>`CAST(COUNT(DISTINCT ${this.commentLikeModel.userId}) AS INTEGER)`,
             })
             .from(this.commentModel)
+            .leftJoin(
+                users,
+                eq(this.commentModel.userId, users.id)
+            )
             .leftJoin(
                 this.commentLikeModel,
                 eq(this.commentModel.id, this.commentLikeModel.commentId)
@@ -42,6 +47,7 @@ export default class CommentRepository {
                 this.commentModel.msgContent,
                 this.commentModel.questionId,
                 this.commentModel.userId,
+                users.name,
                 this.commentModel.createdAt
             )
             .orderBy(desc(this.commentModel.createdAt));

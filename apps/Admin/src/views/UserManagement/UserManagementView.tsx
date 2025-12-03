@@ -70,9 +70,8 @@ export default function HomeView() {
         });
         setUsers(mappedUsers);
       }
-    } catch (error) {
-      console.error("Failed to fetch users", error);
-    } finally {
+    } catch { /* empty */ } 
+    finally {
       setLoading(false);
     }
   };
