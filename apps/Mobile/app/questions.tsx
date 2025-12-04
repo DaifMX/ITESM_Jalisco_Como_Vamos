@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
-import { useRouter, useLocalSearchParams, router } from "expo-router";
-import { useNavigation } from "expo-router";
-import { useRoute } from "@react-navigation/native";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import useSWR from "swr";
 
 import { authClient } from "@/lib/auth-client";
@@ -13,6 +11,7 @@ import { CategoryCard } from "@/components/category-card";
 import { Footer } from "@/components/footer";
 
 import { ScrollView, Pressable, View } from "react-native";
+import type { ScrollView as ScrollViewType } from "react-native";
 
 import { Divider } from "@/components/ui/divider";
 import { HStack } from "@/components/ui/hstack";
@@ -37,6 +36,7 @@ export default function Question() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     (params.categoryId as string) || null
   );
+  const categoryScrollRef = useRef<ScrollViewType>(null);
 
   useEffect(() => {
     if (params.categoryId) {
@@ -92,6 +92,7 @@ export default function Question() {
           {/* Categories */}
           <View className="gap-2">
             <ScrollView
+              ref={categoryScrollRef}
               className="flex flex-row"
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -101,6 +102,7 @@ export default function Question() {
                 <CategoryList
                   selectedCategoryId={selectedCategoryId}
                   setSelectedCategoryId={setSelectedCategoryId}
+                  scrollViewRef={categoryScrollRef}
                 />
               </HStack>
             </ScrollView>
@@ -161,11 +163,14 @@ const QuestionList = ({ categoryId, searchQuery }: { categoryId: string | null; 
 const CategoryList = ({
   selectedCategoryId,
   setSelectedCategoryId,
+  scrollViewRef,
 }: {
   selectedCategoryId: string | null;
   setSelectedCategoryId: (id: string) => void;
+  scrollViewRef: React.RefObject<ScrollViewType | null>;
 }) => {
   const { data } = useSWR(`api/category`, fetcher);
+  const categoryRefs = useRef<{ [key: string]: View | null }>({});
 
   const navigation = useNavigation() as any;
 
@@ -176,17 +181,39 @@ const CategoryList = ({
     });
   };
 
+  // Auto-scroll to selected category
+  useEffect(() => {
+    if (selectedCategoryId && categoryRefs.current[selectedCategoryId] && scrollViewRef.current) {
+      categoryRefs.current[selectedCategoryId]?.measureLayout(
+        scrollViewRef.current as any,
+        (x) => {
+          scrollViewRef.current?.scrollTo({ x: x - 20, animated: true });
+        },
+        () => {}
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategoryId, data]);
+
   return data?.map((c: any) => {
     return (
-      <CategoryCard
-        bgColor={c.color}
-        color={"#FFFFFF"}
-        icon={c.icon}
-        text={c.name}
-        onPress={() => handleOnPress({ id: c.id })}
-        selected={c.id === selectedCategoryId}
+      <View
         key={`CategoryMinicard` + c.id}
-      />
+        ref={(ref) => {
+          if (ref) {
+            categoryRefs.current[c.id] = ref;
+          }
+        }}
+      >
+        <CategoryCard
+          bgColor={c.color}
+          color={"#FFFFFF"}
+          icon={c.icon}
+          text={c.name}
+          onPress={() => handleOnPress({ id: c.id })}
+          selected={c.id === selectedCategoryId}
+        />
+      </View>
     );
   });
 };
