@@ -44,7 +44,7 @@ export default function Home() {
                             <AvatarSection
                                 user={session.data?.user}
                                 handleMyAccount={() => router.push('/my-account')}
-                                handleSettings={() => router.push('/my-account')}
+                                handleInfo={() => router.push('/info')}
                                 handleSignIn={() => router.push('/login')}
                                 handleSignOut={() => { authClient.signOut(); router.push('/login') }}
                             />

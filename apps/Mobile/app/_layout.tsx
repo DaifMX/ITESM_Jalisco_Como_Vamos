@@ -29,6 +29,7 @@ export default function RootLayout() {
               <Stack.Screen name="questions" options={{ title: "Preguntas" }} />
               <Stack.Screen name="questionData" options={{ title: "Datos de pregunta" }} />
               <Stack.Screen name="my-account" options={{ title: "Mi Cuenta" }} />
+              <Stack.Screen name="info" options={{ title: "Acerca de nosotros" }} />
               <Stack.Screen name="login" options={{ headerShown: false }} />
               <Stack.Screen name="register" options={{ headerShown: false }} />
             </Stack>
