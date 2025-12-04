@@ -213,10 +213,6 @@ export default function QuestionData() {
         }
     };
 
-    const clearFilters = () => {
-        setSelectedSegmentValue(promedioSegmentValueId);
-    };
-
     if (isLoading) {
         return (
             <SafeAreaView className="flex-1 bg-white items-center justify-center">
@@ -298,8 +294,6 @@ export default function QuestionData() {
                 selectedSegmentValue={selectedSegmentValue}
                 promedioSegmentValueId={promedioSegmentValueId}
                 onClose={() => setFilterOpen(false)}
-                onApply={() => setFilterOpen(false)}
-                onClearFilters={clearFilters}
                 onSelectSegmentValue={setSelectedSegmentValue}
             />
         </SafeAreaView>

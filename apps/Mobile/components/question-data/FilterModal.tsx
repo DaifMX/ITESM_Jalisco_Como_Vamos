@@ -19,8 +19,6 @@ interface FilterModalProps {
     selectedSegmentValue: string | null;
     promedioSegmentValueId: string | null;
     onClose: () => void;
-    onApply: () => void;
-    onClearFilters: () => void;
     onSelectSegmentValue: (valueId: string | null) => void;
 }
 
@@ -30,51 +28,55 @@ export function FilterModal({
     selectedSegmentValue,
     promedioSegmentValueId,
     onClose,
-    onApply,
-    onClearFilters,
     onSelectSegmentValue,
 }: FilterModalProps) {
+    const handleSelectSegmentValue = (valueId: string | null) => {
+        onSelectSegmentValue(valueId);
+        onClose();
+    };
+
     return (
         <Modal visible={visible} animationType="slide" transparent>
             <View style={styles.modalWrap}>
                 <View style={styles.modalCard}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Filtros por segmento</Text>
-                        <Button
-                            variant="outline"
-                            onPress={onClearFilters}
-                            className="border-pantone-light-blue rounded-xl"
-                        >
-                            <ButtonText className="text-pantone-dark-blue rounded-xl">
-                                Limpiar
-                            </ButtonText>
-                        </Button>
                     </View>
 
                     <ScrollView style={styles.scrollView}>
                         <View style={styles.segmentsContainer}>
-                            {segments?.map((segment) => (
-                                <View key={segment.id}>
-                                    <Text style={styles.filterTitle}>{segment.name}</Text>
-                                    <View style={styles.chipRow}>
-                                        <Chip
-                                            label="Promedio"
-                                            active={selectedSegmentValue === promedioSegmentValueId}
-                                            onPress={() => onSelectSegmentValue(promedioSegmentValueId)}
-                                        />
-                                        {segment.values
-                                            .filter(v => v.name.toLowerCase() !== "promedio")
-                                            .map((value) => (
-                                                <Chip
-                                                    key={value.id}
-                                                    label={value.name}
-                                                    active={selectedSegmentValue === value.id}
-                                                    onPress={() => onSelectSegmentValue(value.id)}
-                                                />
-                                            ))}
-                                    </View>
+                            {/* Botón de Promedio único al inicio */}
+                            <View>
+                                <Text style={styles.filterTitle}>General</Text>
+                                <View style={styles.chipRow}>
+                                    <Chip
+                                        label="Promedio"
+                                        active={selectedSegmentValue === promedioSegmentValueId}
+                                        onPress={() => handleSelectSegmentValue(promedioSegmentValueId)}
+                                    />
                                 </View>
-                            ))}
+                            </View>
+
+                            {/* Segmentos sin incluir Promedio */}
+                            {segments
+                                ?.filter(segment => segment.name.toLowerCase() !== "promedio")
+                                .map((segment) => (
+                                    <View key={segment.id}>
+                                        <Text style={styles.filterTitle}>{segment.name}</Text>
+                                        <View style={styles.chipRow}>
+                                            {segment.values
+                                                .filter(v => v.name.toLowerCase() !== "promedio")
+                                                .map((value) => (
+                                                    <Chip
+                                                        key={value.id}
+                                                        label={value.name}
+                                                        active={selectedSegmentValue === value.id}
+                                                        onPress={() => handleSelectSegmentValue(value.id)}
+                                                    />
+                                                ))}
+                                        </View>
+                                    </View>
+                                ))}
                         </View>
                     </ScrollView>
 
@@ -85,14 +87,6 @@ export function FilterModal({
                     >
                         <ButtonText className="text-pantone-dark-blue">
                             Cerrar
-                        </ButtonText>
-                    </Button>
-                    <Button 
-                        onPress={onApply} 
-                        className="bg-pantone-dark-blue rounded-xl"
-                    >
-                        <ButtonText className="text-white">
-                            Aplicar filtro
                         </ButtonText>
                     </Button>
                 </View>
