@@ -1,17 +1,20 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
     View,
     StyleSheet,
     ScrollView,
     Share,
     Pressable,
-    ActivityIndicator
+    ActivityIndicator,
+    Alert
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import useSWR from "swr";
+import { captureRef } from 'react-native-view-shot';
 
 import { authClient } from "@/lib/auth-client";
 import axiosInstance, { fetcher } from "@/lib/axios";
+import { exportChartToPDF } from "@/functions/exportPDF";
 
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
@@ -22,7 +25,7 @@ import { FilterModal } from "@/components/question-data/FilterModal";
 import { ChartCard } from "@/components/question-data/ChartCard";
 import ErrorDialog from "@/components/error-dialog";
 
-import { ArrowLeftIcon, ShareIcon, FilterIcon } from "lucide-react-native";
+import { ArrowLeftIcon, ShareIcon, FilterIcon, FileTextIcon } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ======== Tipos ========
@@ -78,6 +81,8 @@ export default function QuestionData() {
     const [comment, setComment] = useState<string>("");
     const [chartType, setChartType] = useState<"pie" | "bar">("pie");
     const [isSubmittingComment, setIsSubmittingComment] = useState<boolean>(false);
+    const [isExportingPDF, setIsExportingPDF] = useState<boolean>(false);
+    const chartRef = useRef<View>(null);
     const [errorDialog, setErrorDialog] = useState<{ isOpen: boolean; message: string }>({
         isOpen: false,
         message: ""
@@ -164,6 +169,38 @@ export default function QuestionData() {
             })),
         };
         await Share.share({ message: JSON.stringify(payload, null, 2) });
+    };
+
+    const exportPDF = async () => {
+        if (!data || !chartRef.current) return;
+
+        setIsExportingPDF(true);
+        try {
+            // Capture the chart as an image
+            const chartImageUri = await captureRef(chartRef, {
+                format: 'png',
+                quality: 1,
+                result: 'base64',
+            });
+
+            // Generate and share the PDF
+            await exportChartToPDF({
+                questionText: data.question.value,
+                questionCode: data.question.xlsxCode,
+                chartData: chartData.map(({ name, value }) => ({ name, value })),
+                chartImageBase64: chartImageUri,
+                total: total,
+            });
+        } catch (error: any) {
+            console.error('Error exporting PDF:', error);
+            Alert.alert(
+                'Error',
+                'No se pudo exportar el PDF. Por favor, intenta de nuevo.',
+                [{ text: 'OK' }]
+            );
+        } finally {
+            setIsExportingPDF(false);
+        }
     };
 
     const addComment = async () => {
@@ -263,6 +300,7 @@ export default function QuestionData() {
                     <Text className="text-base text-black font-semibold leading-6">{data.question.value}</Text>
                 </View>
                 <ChartCard
+                    ref={chartRef}
                     title="Distribución de respuestas"
                     subtitle={`Total: ${total.toFixed(1)}%`}
                     chartData={chartData}
@@ -270,6 +308,14 @@ export default function QuestionData() {
                     onChartTypeChange={setChartType}
                     actionButtons={
                         <>
+                            <Pressable 
+                                onPress={exportPDF} 
+                                disabled={isExportingPDF}
+                                className="bg-pantone-red rounded-xl p-2.5 active:opacity-80"
+                                style={({ pressed }) => [{ opacity: pressed || isExportingPDF ? 0.6 : 1 }]}
+                            >
+                                <FileTextIcon size={20} color="#ffffff" />
+                            </Pressable>
                             <Pressable 
                                 onPress={exportJSON} 
                                 className="bg-gray-300 rounded-xl p-2.5 active:opacity-80"

@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
+import { forwardRef } from "react";
 import { DynamicPieChart } from "@/components/graphs/DynamicPieChart";
 import { DynamicBarChart } from "@/components/graphs/DynamicBarChart";
 import { PieChartIcon, BarChart3Icon } from "lucide-react-native";
@@ -18,16 +19,17 @@ interface ChartCardProps {
     actionButtons?: React.ReactNode;
 }
 
-export function ChartCard({
+// eslint-disable-next-line react/display-name
+export const ChartCard = forwardRef<View, ChartCardProps>(({
     title,
     subtitle,
     chartData,
     chartType,
     onChartTypeChange,
     actionButtons,
-}: ChartCardProps) {
+}, ref) => {
     return (
-        <View style={styles.card}>
+        <View ref={ref} style={styles.card}>
             <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{title}</Text>
                 <Text style={styles.cardSubtitle}>{subtitle}</Text>
@@ -74,7 +76,7 @@ export function ChartCard({
             )}
         </View>
     );
-}
+});
 
 const styles = StyleSheet.create({
     card: {
