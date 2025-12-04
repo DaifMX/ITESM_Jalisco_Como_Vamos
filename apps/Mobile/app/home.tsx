@@ -71,7 +71,7 @@ export default function Home() {
 
                     {/* Categories */}
                     <VStack space="md">
-                        <CategoryList />
+                        <CategoryList searchQuery={searchBarVal} />
                     </VStack>
                 </View>
             </ScrollView>
@@ -80,7 +80,7 @@ export default function Home() {
     );
 }
 
-const CategoryList = () => {
+const CategoryList = ({ searchQuery }: { searchQuery: string }) => {
     const router = useRouter();
 
     const { data, error, isLoading } = useSWR('/api/category', fetcher);
@@ -89,9 +89,18 @@ const CategoryList = () => {
 
     if (isLoading) return <ThemedText>Cargando...</ThemedText>
 
+    // Filtrar categorías basado en la búsqueda
+    const filteredData = data?.filter((c: any) => 
+        c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Mostrar mensaje si no hay resultados
+    if (filteredData?.length === 0) {
+        return <ThemedText className="text-gray-500 text-center">No se encontraron categorías</ThemedText>
+    }
 
     return (
-        data?.map((c: any) => {
+        filteredData?.map((c: any) => {
             return (
                 <HomeElementCard
                     key={c.id}

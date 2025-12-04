@@ -21,7 +21,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { VStack } from "@/components/ui/vstack";
 
-import { ArrowLeftIcon, Box, HeartIcon, SearchIcon } from "lucide-react-native";
+import { ArrowLeftIcon, SearchIcon } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export type Session = typeof authClient.$Infer.Session;
@@ -109,7 +109,7 @@ export default function Question() {
 
           {/* Questions */}
           <VStack space="md">
-            <QuestionList categoryId={selectedCategoryId} />
+            <QuestionList categoryId={selectedCategoryId} searchQuery={searchBarVal} />
           </VStack>
         </View>
       </ScrollView>
@@ -118,7 +118,7 @@ export default function Question() {
   );
 }
 
-const QuestionList = ({ categoryId }: { categoryId: string | null }) => {
+const QuestionList = ({ categoryId, searchQuery }: { categoryId: string | null; searchQuery: string }) => {
   const router = useRouter();
 
   const url = categoryId ? `/api/question?cid=${categoryId}` : "/api/question";
@@ -133,15 +133,21 @@ const QuestionList = ({ categoryId }: { categoryId: string | null }) => {
 
   if (isLoading) return <ThemedText>Cargando...</ThemedText>;
 
-  if (!data || data.length === 0) {
+  // Filtrar preguntas basado en la búsqueda
+  const filteredData = data?.filter((c: any) => 
+    c.valueShort.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.value?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (!filteredData || filteredData.length === 0) {
     return (
-      <ThemedText className="text-gray-500">
-        No hay preguntas en esta categoría
+      <ThemedText className="text-gray-500 text-center">
+        {searchQuery ? "No se encontraron preguntas que coincidan con tu búsqueda" : "No hay preguntas en esta categoría"}
       </ThemedText>
     );
   }
 
-  return data?.map((c: any) => {
+  return filteredData?.map((c: any) => {
     return (
       <BasicElementCard
         key={c.id}
@@ -161,20 +167,15 @@ const CategoryList = ({
 }) => {
   const { data } = useSWR(`api/category`, fetcher);
 
-  const [currentCategory, setCurrentCategory] = useState("");
-  const navigation = useNavigation() as any
-  const route = useRoute()
+  const navigation = useNavigation() as any;
 
   const handleOnPress = ({ id }: { id: string }) => {
-    setCurrentCategory(id);
-    navigation
-    /* router.push(`/questions?categoryId=${id}`); */
+    setSelectedCategoryId(id);
     navigation.setParams({
       categoryId: id
-    })
+    });
   };
 
-  const router = useRouter();
   return data?.map((c: any) => {
     return (
       <CategoryCard
@@ -183,7 +184,7 @@ const CategoryList = ({
         icon={c.icon}
         text={c.name}
         onPress={() => handleOnPress({ id: c.id })}
-        selected={c.id === currentCategory ? true : false}
+        selected={c.id === selectedCategoryId}
         key={`CategoryMinicard` + c.id}
       />
     );

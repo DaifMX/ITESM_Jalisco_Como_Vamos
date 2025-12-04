@@ -22,13 +22,13 @@ export const HomeElementCard = ({
   return (
     <Pressable onPress={onPress} className="w-full">
       <Box
-        className="w-full rounded-xl border-2 border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 flex flex-row items-center gap-1"
+        className="w-full rounded-xl border-2 border-[#E5E7EB] bg-[#F9FAFB] px-2 py-3 flex flex-row items-center gap-1"
         style={{ height: 70, backgroundColor: bgColor, }}
       >
         <Box className="mt-px mr-2">
           <Icon name={icon} color={color} size={20} />
         </Box>
-        <ThemedText className="" style={{ color, fontSize: 19 }}>
+        <ThemedText className="font-semibold" style={{ color, fontSize: 19 }}>
           {text}
         </ThemedText>
       </Box>
