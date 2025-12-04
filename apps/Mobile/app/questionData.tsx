@@ -2,10 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import {
     View,
     StyleSheet,
-    TouchableOpacity,
     ScrollView,
-    Modal,
-    TextInput,
     Share,
     Pressable,
     ActivityIndicator
@@ -20,10 +17,11 @@ import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
 import { ThemedText } from "@/components/themed-text";
 import { AvatarSection } from "@/components/avatar-section";
-import { DynamicPieChart } from "@/components/graphs/DynamicPieChart";
-import { DynamicBarChart } from "@/components/graphs/DynamicBarChart";
+import { CommentSection } from "@/components/question-data/CommentSection";
+import { FilterModal } from "@/components/question-data/FilterModal";
+import { ChartCard } from "@/components/question-data/ChartCard";
 
-import { ArrowLeftIcon, PieChartIcon, BarChart3Icon, HeartIcon } from "lucide-react-native";
+import { ArrowLeftIcon } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ======== Tipos ========
@@ -181,7 +179,7 @@ export default function QuestionData() {
             setComment("");
             // Revalidar comentarios
             mutateComments();
-        } catch (error) {
+        } catch {
             alert('Error al agregar comentario');
         } finally {
             setIsSubmittingComment(false);
@@ -196,7 +194,7 @@ export default function QuestionData() {
 
             // Revalidar comentarios
             mutateComments();
-        } catch (error) {
+        } catch {
             alert('Error al eliminar comentario');
         }
     };
@@ -209,28 +207,10 @@ export default function QuestionData() {
         
         try {
             await axiosInstance.post(`/api/comment/${commentId}/like`);
-
-            // Revalidar comentarios para actualizar el estado de likes
             mutateComments();
-        } catch (error) {
+        } catch {
             alert('Error al dar like');
         }
-    };
-
-    const formatTimeAgo = (dateString: string): string => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
-        const diffMonths = Math.floor(diffMs / 2592000000);
-        
-        if (diffMins < 1) return 'justo ahora';
-        if (diffMins < 60) return `hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
-        if (diffHours < 24) return `hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
-        if (diffDays < 30) return `hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
-        return `hace ${diffMonths} mes${diffMonths > 1 ? 'es' : ''}`;
     };
 
     const clearFilters = () => {
@@ -291,228 +271,43 @@ export default function QuestionData() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scroll}>
-                <Card
+                <ChartCard
                     title="Distribución de respuestas"
                     subtitle={`Total: ${total.toFixed(1)}%`}
-                >
-                    <View style={styles.chartToggleContainer}>
-                        <Button
-                            onPress={() => setChartType("pie")}
-                            className={chartType === "pie" ? "bg-pantone-dark-blue" : "bg-gray-300"}
-                            style={styles.toggleButton}
-                        >
-                            <PieChartIcon 
-                                size={20} 
-                                color={chartType === "pie" ? "#ffffff" : "#6b7280"} 
-                            />
-                        </Button>
-                        <Button
-                            onPress={() => setChartType("bar")}
-                            className={chartType === "bar" ? "bg-pantone-dark-blue" : "bg-gray-300"}
-                            style={styles.toggleButton}
-                        >
-                            <BarChart3Icon 
-                                size={20} 
-                                color={chartType === "bar" ? "#ffffff" : "#6b7280"} 
-                            />
-                        </Button>
-                    </View>
+                    chartData={chartData}
+                    chartType={chartType}
+                    onChartTypeChange={setChartType}
+                />
 
-                    {chartType === "pie" ? (
-                        <DynamicPieChart
-                            data={chartData}
-                            height={240}
-                        />
-                    ) : (
-                        <DynamicBarChart
-                            data={chartData}
-                            height={260}
-                        />
-                    )}
-                </Card>
-
-                {/* Comentarios */}
-                <View style={styles.commentsBlock}>
-                    <Text style={styles.sectionTitle}>Comentarios</Text>
-                    <View style={styles.inputRow}>
-                        <TextInput
-                            style={styles.input}
-                            placeholder={session.data?.user ? "Agrega un comentario…" : "Inicia sesión para comentar"}
-                            value={comment}
-                            onChangeText={setComment}
-                            multiline
-                            editable={!!session.data?.user && !isSubmittingComment}
-                        />
-                        <Button 
-                            onPress={addComment} 
-                            className="bg-pantone-dark-blue rounded-xl"
-                            disabled={isSubmittingComment || !session.data?.user}
-                        >
-                            <ButtonText className="text-white">
-                                {isSubmittingComment ? 'Enviando...' : 'Compartir'}
-                            </ButtonText>
-                        </Button>
-                    </View>
-                    {commentsError && (
-                        <Text style={{ color: 'rgb(220, 38, 38)', textAlign: 'center' }}>
-                            Error al cargar comentarios
-                        </Text>
-                    )}
-                    {!commentsData && !commentsError && (
-                        <ActivityIndicator size="small" color="rgb(0, 61, 165)" />
-                    )}
-                    {commentsData && commentsData.length === 0 && (
-                        <Text style={{ textAlign: 'center', color: 'rgb(153, 179, 214)', marginTop: 16 }}>
-                            No hay comentarios aún. ¡Sé el primero en comentar!
-                        </Text>
-                    )}
-                    {commentsData?.map((c) => (
-                        <View key={c.id} style={styles.comment}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
-                                    {c.userName ? c.userName.charAt(0).toUpperCase() : 'U'}
-                                </Text>
-                            </View>
-                            <View style={styles.commentBody}>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Text style={styles.commentMeta}>
-                                        <Text style={{ fontWeight: "600", color: "#000" }}>
-                                            {c.userId === session.data?.user?.id ? 'Tú' : (c.userName || 'Usuario')}
-                                        </Text>
-                                        <Text> · {formatTimeAgo(c.createdAt)}</Text>
-                                    </Text>
-                                    {c.userId === session.data?.user?.id && (
-                                        <TouchableOpacity onPress={() => deleteComment(c.id)}>
-                                            <Text style={{ color: 'rgb(220, 38, 38)', fontSize: 12 }}>Eliminar</Text>
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
-                                <Text style={styles.commentText}>{c.msgContent}</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 4 }}>
-                                    <TouchableOpacity 
-                                        onPress={() => toggleLike(c.id)}
-                                        style={{ 
-                                            flexDirection: 'row', 
-                                            alignItems: 'center', 
-                                            gap: 4,
-                                            padding: 4,
-                                        }}
-                                    >
-                                        <HeartIcon 
-                                            size={18} 
-                                            color={c.hasLiked ? "rgb(220, 38, 38)" : "rgb(153, 179, 214)"}
-                                            fill={c.hasLiked ? "rgb(220, 38, 38)" : "none"}
-                                        />
-                                        <Text style={{ 
-                                            fontSize: 14, 
-                                            color: c.hasLiked ? "rgb(220, 38, 38)" : "rgb(153, 179, 214)",
-                                            fontWeight: c.hasLiked ? '600' : '400'
-                                        }}>
-                                            {c.likesCount}
-                                        </Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    ))}
-                </View>
+                <CommentSection
+                    comments={commentsData}
+                    commentsError={commentsError}
+                    isSubmittingComment={isSubmittingComment}
+                    comment={comment}
+                    user={session.data?.user}
+                    onCommentChange={setComment}
+                    onAddComment={addComment}
+                    onDeleteComment={deleteComment}
+                    onToggleLike={toggleLike}
+                />
             </ScrollView>
 
-            {/* Panel de filtros */}
-            <Modal visible={filterOpen} animationType="slide" transparent>
-                <View style={styles.modalWrap}>
-                    <View style={styles.modalCard}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Filtros por segmento</Text>
-                            <Button
-                                variant="outline"
-                                onPress={clearFilters}
-                                className="border-pantone-light-blue rounded-xl"
-                            >
-                                <ButtonText className="text-pantone-dark-blue rounded-xl">
-                                    Limpiar
-                                </ButtonText>
-                            </Button>
-                        </View>
-
-                        <ScrollView style={{ maxHeight: 400 }}>
-                            <View style={{ gap: 16 }}>
-                                {segmentsData?.map((segment) => (
-                                    <View key={segment.id}>
-                                        <Text style={styles.filterTitle}>{segment.name}</Text>
-                                        <View style={styles.chipRow}>
-                                            <Chip
-                                                label="Promedio"
-                                                active={selectedSegmentValue === promedioSegmentValueId}
-                                                onPress={() => setSelectedSegmentValue(promedioSegmentValueId)}
-                                            />
-                                            {segment.values
-                                                .filter(v => v.name.toLowerCase() !== "promedio")
-                                                .map((value) => (
-                                                    <Chip
-                                                        key={value.id}
-                                                        label={value.name}
-                                                        active={selectedSegmentValue === value.id}
-                                                        onPress={() => setSelectedSegmentValue(value.id)}
-                                                    />
-                                                ))}
-                                        </View>
-                                    </View>
-                                ))}
-                            </View>
-                        </ScrollView>
-
-                        <Button variant="outline" onPress={() => setFilterOpen(false)} className="border-pantone-light-blue rounded-xl">
-                            <ButtonText className="text-pantone-dark-blue">
-                                Cerrar
-                            </ButtonText>
-                        </Button>
-                        <Button onPress={() => setFilterOpen(false)} className="bg-pantone-dark-blue rounded-xl">
-                            <ButtonText className="text-white">
-                                Aplicar filtro
-                            </ButtonText>
-                        </Button>
-                    </View>
-                </View>
-            </Modal>
+            <FilterModal
+                visible={filterOpen}
+                segments={segmentsData}
+                selectedSegmentValue={selectedSegmentValue}
+                promedioSegmentValueId={promedioSegmentValueId}
+                onClose={() => setFilterOpen(false)}
+                onApply={() => setFilterOpen(false)}
+                onClearFilters={clearFilters}
+                onSelectSegmentValue={setSelectedSegmentValue}
+            />
         </SafeAreaView>
-    );
-}
-// ======== UI helpers con tipos ========
-type CardProps = {
-    title: string;
-    subtitle?: string; // opcional
-    children: React.ReactNode;
-};
-function Card({ title, subtitle, children }: CardProps): React.ReactElement {
-    return (
-        <View style={styles.card}>
-            <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{title}</Text>
-                {subtitle ? <Text style={styles.cardSubtitle}>{subtitle}</Text> : null}
-            </View>
-            {children}
-        </View>
-    );
-}
-
-type ChipProps = { label: string; active: boolean; onPress: () => void };
-function Chip({ label, active, onPress }: ChipProps): React.ReactElement {
-    return (
-        <TouchableOpacity
-            onPress={onPress}
-            style={[styles.chip, active && styles.chipActive]}
-        >
-            <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                {label}
-            </Text>
-        </TouchableOpacity>
     );
 }
 
 // ======== Estilos ========
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "rgb(251, 251, 251)" },
     header: {
         paddingTop: 16,
         paddingBottom: 8,
@@ -521,114 +316,7 @@ const styles = StyleSheet.create({
         borderBottomColor: "rgb(153, 179, 214)",
         backgroundColor: "rgb(255, 255, 255)",
     },
-    title: { fontSize: 18, fontWeight: "700", color: "#000" },
     questionText: { fontSize: 16, color: "#444", marginTop: 8 },
     headerButtons: { flexDirection: "row", gap: 8, marginTop: 8 },
     scroll: { padding: 16, gap: 16 },
-    card: {
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: "rgb(153, 179, 214)",
-        borderRadius: 16,
-        padding: 12,
-        backgroundColor: "rgb(255, 255, 255)",
-        shadowColor: "rgb(0, 61, 165)",
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 1,
-    },
-    cardHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 8,
-    },
-    cardTitle: { fontSize: 16, fontWeight: "600", color: "#000" },
-    cardSubtitle: { fontSize: 12, color: "rgb(153, 179, 214)" },
-    commentsBlock: { gap: 12 },
-    sectionTitle: { fontSize: 18, fontWeight: "600", color: "#000" },
-    inputRow: { gap: 8 },
-    input: {
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: "rgb(153, 179, 214)",
-        borderRadius: 12,
-        padding: 10,
-        minHeight: 80,
-        textAlignVertical: "top",
-        color: "#000",
-    },
-    comment: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "rgb(153, 179, 214)",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    avatarText: { fontWeight: "700", color: "#000" },
-    commentBody: {
-        flex: 1,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: "rgb(153, 179, 214)",
-        borderRadius: 12,
-        padding: 10,
-    },
-    commentMeta: { fontSize: 12, color: "rgb(153, 179, 214)", marginBottom: 4 },
-    commentText: { fontSize: 14, lineHeight: 20, color: "#000" },
-    btn: {
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        borderRadius: 12,
-        alignSelf: "flex-start",
-    },
-    btnSolid: { backgroundColor: "rgb(0, 61, 165)" },
-    btnText: { color: "rgb(255, 255, 255)", fontWeight: "600" },
-    btnOutline: {
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: "rgb(153, 179, 214)",
-        backgroundColor: "rgb(255, 255, 255)",
-    },
-    btnTextOutline: { color: "rgb(0, 61, 165)", fontWeight: "600" },
-    modalWrap: {
-        flex: 1,
-        backgroundColor: "rgba(0, 61, 165, 0.3)",
-        justifyContent: "flex-end",
-    },
-    modalCard: {
-        backgroundColor: "rgb(255, 255, 255)",
-        padding: 16,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        gap: 16,
-    },
-    modalHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-    modalTitle: { fontSize: 16, fontWeight: "700", color: "#000" },
-    filterTitle: { fontWeight: "600", marginBottom: 8, color: "#000" },
-    chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-    chip: {
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: "rgb(153, 179, 214)",
-        borderRadius: 999,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-    },
-    chipActive: { backgroundColor: "rgb(0, 61, 165)", borderColor: "rgb(0, 61, 165)" },
-    chipText: { color: "rgb(0, 61, 165)" },
-    chipTextActive: { color: "rgb(255, 255, 255)" },
-    modalFooter: { flexDirection: "row", justifyContent: "flex-end", gap: 8 },
-    chartToggleContainer: {
-        flexDirection: "row",
-        gap: 8,
-        marginBottom: 16,
-        justifyContent: "flex-start",
-    },
-    toggleButton: {
-        borderRadius: 12,
-        minWidth: 48,
-        paddingHorizontal: 12,
-    },
 });
