@@ -1,5 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
-import { Button } from "@/components/ui/button";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { DynamicPieChart } from "@/components/graphs/DynamicPieChart";
 import { DynamicBarChart } from "@/components/graphs/DynamicBarChart";
 import { PieChartIcon, BarChart3Icon } from "lucide-react-native";
@@ -16,6 +15,7 @@ interface ChartCardProps {
     chartData: ChartDataItem[];
     chartType: "pie" | "bar";
     onChartTypeChange: (type: "pie" | "bar") => void;
+    actionButtons?: React.ReactNode;
 }
 
 export function ChartCard({
@@ -24,6 +24,7 @@ export function ChartCard({
     chartData,
     chartType,
     onChartTypeChange,
+    actionButtons,
 }: ChartCardProps) {
     return (
         <View style={styles.card}>
@@ -33,26 +34,31 @@ export function ChartCard({
             </View>
 
             <View style={styles.chartToggleContainer}>
-                <Button
+                <Pressable
                     onPress={() => onChartTypeChange("pie")}
-                    className={chartType === "pie" ? "bg-pantone-dark-blue" : "bg-gray-300"}
-                    style={styles.toggleButton}
+                    className={chartType === "pie" ? "bg-pantone-light-blue rounded-xl p-2.5" : "bg-gray-300 rounded-xl p-2.5"}
+                    style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
                 >
                     <PieChartIcon 
                         size={20} 
                         color={chartType === "pie" ? "#ffffff" : "#6b7280"} 
                     />
-                </Button>
-                <Button
+                </Pressable>
+                <Pressable
                     onPress={() => onChartTypeChange("bar")}
-                    className={chartType === "bar" ? "bg-pantone-dark-blue" : "bg-gray-300"}
-                    style={styles.toggleButton}
+                    className={chartType === "bar" ? "bg-pantone-light-blue rounded-xl p-2.5" : "bg-gray-300 rounded-xl p-2.5"}
+                    style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
                 >
                     <BarChart3Icon 
                         size={20} 
                         color={chartType === "bar" ? "#ffffff" : "#6b7280"} 
                     />
-                </Button>
+                </Pressable>
+                {actionButtons && (
+                    <View style={styles.actionButtonsWrapper}>
+                        {actionButtons}
+                    </View>
+                )}
             </View>
 
             {chartType === "pie" ? (
@@ -87,6 +93,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         marginBottom: 8,
+        alignItems: "flex-start",
     },
     cardTitle: { 
         fontSize: 16, 
@@ -95,17 +102,19 @@ const styles = StyleSheet.create({
     },
     cardSubtitle: { 
         fontSize: 12, 
-        color: "rgb(153, 179, 214)" 
+        color: "rgb(153, 179, 214)",
+        marginTop: 2,
     },
     chartToggleContainer: {
         flexDirection: "row",
         gap: 8,
         marginBottom: 16,
         justifyContent: "flex-start",
+        alignItems: "center",
     },
-    toggleButton: {
-        borderRadius: 12,
-        minWidth: 48,
-        paddingHorizontal: 12,
+    actionButtonsWrapper: {
+        flexDirection: "row",
+        gap: 8,
+        marginLeft: "auto",
     },
 });

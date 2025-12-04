@@ -20,8 +20,9 @@ import { AvatarSection } from "@/components/avatar-section";
 import { CommentSection } from "@/components/question-data/CommentSection";
 import { FilterModal } from "@/components/question-data/FilterModal";
 import { ChartCard } from "@/components/question-data/ChartCard";
+import ErrorDialog from "@/components/error-dialog";
 
-import { ArrowLeftIcon } from "lucide-react-native";
+import { ArrowLeftIcon, ShareIcon, FilterIcon } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ======== Tipos ========
@@ -77,6 +78,10 @@ export default function QuestionData() {
     const [comment, setComment] = useState<string>("");
     const [chartType, setChartType] = useState<"pie" | "bar">("pie");
     const [isSubmittingComment, setIsSubmittingComment] = useState<boolean>(false);
+    const [errorDialog, setErrorDialog] = useState<{ isOpen: boolean; message: string }>({
+        isOpen: false,
+        message: ""
+    });
 
     // Fetch segments with values to find "Promedio"
     const segmentsUrl = '/api/segment/with-values';
@@ -164,7 +169,7 @@ export default function QuestionData() {
     const addComment = async () => {
         if (!comment.trim()) return;
         if (!session.data?.user) {
-            alert('Debes iniciar sesión para comentar');
+            setErrorDialog({ isOpen: true, message: 'Debes iniciar sesión para comentar' });
             return;
         }
         
@@ -179,8 +184,8 @@ export default function QuestionData() {
             setComment("");
             // Revalidar comentarios
             mutateComments();
-        } catch {
-            alert('Error al agregar comentario');
+        } catch (err: any) {
+            setErrorDialog({ isOpen: true, message: err.message ?? 'Error al agregar comentario' });
         } finally {
             setIsSubmittingComment(false);
         }
@@ -194,22 +199,22 @@ export default function QuestionData() {
 
             // Revalidar comentarios
             mutateComments();
-        } catch {
-            alert('Error al eliminar comentario');
+        } catch (err: any) {
+            setErrorDialog({ isOpen: true, message: err.message ?? 'Error al eliminar comentario' });
         }
     };
 
     const toggleLike = async (commentId: string) => {
         if (!session.data?.user) {
-            alert('Debes iniciar sesión para dar like');
+            setErrorDialog({ isOpen: true, message: 'Debes iniciar sesión para dar like' });
             return;
         }
         
         try {
             await axiosInstance.post(`/api/comment/${commentId}/like`);
             mutateComments();
-        } catch {
-            alert('Error al dar like');
+        } catch (err: any) {
+            setErrorDialog({ isOpen: true, message: err.message ?? 'Error al dar like' });
         }
     };
 
@@ -238,7 +243,7 @@ export default function QuestionData() {
     return (
         <SafeAreaView className="flex-1 bg-white">
             <View style={styles.header}>
-                <View className="flex flex-row justify-between">
+                <View className="flex flex-row justify-between items-center">
                     <Pressable onPress={() => router.back()}>
                         <ArrowLeftIcon size={40} />
                     </Pressable>
@@ -251,28 +256,36 @@ export default function QuestionData() {
                         handleSignOut={() => { authClient.signOut(); router.push('/login') }}
                     />
                 </View>
-                <Text style={styles.questionText}>{data.question.value}</Text>
-                <View style={styles.headerButtons}>
-                    <Button onPress={exportJSON} className="bg-pantone-orange rounded-xl">
-                        <ButtonText className="text-white">
-                            Exportar
-                        </ButtonText>
-                    </Button>
-                    <Button onPress={() => setFilterOpen(true)} className="bg-pantone-dark-blue rounded-xl">
-                        <ButtonText className="text-white">
-                            Aplicar filtro
-                        </ButtonText>
-                    </Button>
-                </View>
             </View>
 
-            <ScrollView contentContainerStyle={styles.scroll}>
+            <ScrollView contentContainerClassName="p-4 gap-4">
+                <View className="border border-pantone-light-blue rounded-2xl p-3 bg-white shadow-sm">
+                    <Text className="text-base text-black font-semibold leading-6">{data.question.value}</Text>
+                </View>
                 <ChartCard
                     title="Distribución de respuestas"
                     subtitle={`Total: ${total.toFixed(1)}%`}
                     chartData={chartData}
                     chartType={chartType}
                     onChartTypeChange={setChartType}
+                    actionButtons={
+                        <>
+                            <Pressable 
+                                onPress={exportJSON} 
+                                className="bg-gray-300 rounded-xl p-2.5 active:opacity-80"
+                                style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+                            >
+                                <ShareIcon size={20} color="#6b7280" />
+                            </Pressable>
+                            <Pressable 
+                                onPress={() => setFilterOpen(true)} 
+                                className="bg-gray-300 rounded-xl p-2.5 active:opacity-80"
+                                style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+                            >
+                                <FilterIcon size={20} color="#6b7280" />
+                            </Pressable>
+                        </>
+                    }
                 />
 
                 <CommentSection
@@ -296,6 +309,12 @@ export default function QuestionData() {
                 onClose={() => setFilterOpen(false)}
                 onSelectSegmentValue={setSelectedSegmentValue}
             />
+
+            <ErrorDialog
+                isOpen={errorDialog.isOpen}
+                cause={errorDialog.message}
+                handleClose={() => setErrorDialog({ isOpen: false, message: "" })}
+            />
         </SafeAreaView>
     );
 }
@@ -304,13 +323,10 @@ export default function QuestionData() {
 const styles = StyleSheet.create({
     header: {
         paddingTop: 16,
-        paddingBottom: 8,
+        paddingBottom: 16,
         paddingHorizontal: 16,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: "rgb(153, 179, 214)",
         backgroundColor: "rgb(255, 255, 255)",
     },
-    questionText: { fontSize: 16, color: "#444", marginTop: 8 },
-    headerButtons: { flexDirection: "row", gap: 8, marginTop: 8 },
-    scroll: { padding: 16, gap: 16 },
 });

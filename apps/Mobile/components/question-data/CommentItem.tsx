@@ -51,12 +51,16 @@ export function CommentItem({
                 <View style={styles.likeContainer}>
                     <TouchableOpacity 
                         onPress={() => onToggleLike(id)}
-                        style={styles.likeButton}
+                        style={[
+                            styles.likeButton,
+                            hasLiked && styles.likeButtonActive
+                        ]}
                     >
                         <HeartIcon 
-                            size={18} 
+                            size={20} 
                             color={hasLiked ? "rgb(220, 38, 38)" : "rgb(153, 179, 214)"}
-                            fill={hasLiked ? "rgb(220, 38, 38)" : "none"}
+                            fill={hasLiked ? "rgb(220, 38, 38)" : "transparent"}
+                            strokeWidth={hasLiked ? 0 : 2}
                         />
                         <Text style={[
                             styles.likeCount,
@@ -130,6 +134,10 @@ const styles = StyleSheet.create({
         alignItems: 'center', 
         gap: 4,
         padding: 4,
+        borderRadius: 8,
+    },
+    likeButtonActive: {
+        backgroundColor: 'rgb(254, 226, 226)',
     },
     likeCount: { 
         fontSize: 14, 
