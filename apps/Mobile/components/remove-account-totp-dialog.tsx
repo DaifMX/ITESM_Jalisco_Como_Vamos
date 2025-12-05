@@ -23,6 +23,12 @@ export function RemoveAccountTOTPDialog({
 }) {
     const [code, setCode] = useState('');
 
+    const handleCodeChange = (text: string) => {
+        // Solo permite números y máximo 6 dígitos
+        const numericCode = text.replace(/\D/g, '').slice(0, 6);
+        setCode(numericCode);
+    };
+
     const handleSubmit = async () => {
         await onSubmit(code);
         setCode('');
@@ -43,9 +49,10 @@ export function RemoveAccountTOTPDialog({
                         <Input>
                             <InputField
                                 value={code}
-                                onChangeText={setCode}
-                                placeholder="Código TOTP"
+                                onChangeText={handleCodeChange}
+                                placeholder="000000"
                                 keyboardType="number-pad"
+                                maxLength={6}
                             />
                         </Input>
                     </AlertDialogBody>
@@ -53,8 +60,12 @@ export function RemoveAccountTOTPDialog({
                         <Button onPress={onCancel} className='bg-gray-500 data-[active=true]:bg-gray-600 rounded-lg'>
                             <ButtonText>Cancelar</ButtonText>
                         </Button>
-                        <Button onPress={handleSubmit} className="bg-pantone-red data-[active=true]:bg-pantone-red-dark rounded-xl">
-                            <ButtonText>Verificar</ButtonText>
+                        <Button 
+                            onPress={handleSubmit} 
+                            className="bg-pantone-red data-[active=true]:bg-pantone-red-dark rounded-xl"
+                            isDisabled={code.length !== 6}
+                        >
+                            <ButtonText>Eliminar cuenta</ButtonText>
                         </Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>

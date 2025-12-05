@@ -27,7 +27,7 @@ import { GenericMessageDialog } from "@/components/success-dialog";
 import { TFAConfirmDialog } from "@/components/2fa-confirm-dialog";
 
 type DialogState = {
-    type: 'none' | 'error' | 'change-password-sheet' | '2fa-password' | '2fa-secret' | '2fa-confirm' | 'name' | 'success' | 'remove-confirm' | 'remove-password' | 'remove-totp';
+    type: 'none' | 'error' | 'change-password-sheet' | '2fa-password' | '2fa-secret' | '2fa-confirm' | 'name' | 'success' | 'remove-confirm' | 'remove-password' | 'remove-totp' | 'disable-2fa-password' | 'disable-2fa-confirm';
     title?: string;
     message?: string;
     callback?: (...args: any[]) => Promise<any>;
@@ -199,6 +199,57 @@ export default function MyAccount() {
     const handleConfirmCopyDiag2FA_Btn = () => {
         setDialog({ type: '2fa-confirm' });
     };
+
+    const handleDisable2FA_Btn = async () => {
+        setDialog({ type: 'disable-2fa-password' });
+    };
+
+    const handleDisable2FA_Password = async (password: string) => {
+        setTempPassword(password);
+        setDialog({ type: 'disable-2fa-confirm' });
+    };
+
+    const handleDisable2FA_Confirm = async (code: string) => {
+        try {
+            setDialog({ type: 'none' });
+            setIsLoading(true);
+
+            // Primero verificar el código TOTP
+            const verifyResult = await authClient.twoFactor.verifyTotp({
+                code,
+            });
+
+            if (verifyResult.error) {
+                const errorMessage = verifyResult.error?.code
+                    ? getBetterAuthErrorMessage_ES(verifyResult.error.code)
+                    : verifyResult.error.message;
+                setDialog({ type: 'error', message: errorMessage ?? 'Código inválido' });
+                return;
+            }
+
+            // Luego desactivar 2FA con la contraseña
+            const { data, error } = await authClient.twoFactor.disable({
+                password: tempPassword,
+            });
+
+            if (error) {
+                const errorMessage = error?.code
+                    ? getBetterAuthErrorMessage_ES(error.code)
+                    : error.message;
+                setDialog({ type: 'error', message: errorMessage ?? 'Error al desactivar 2FA' });
+                return;
+            }
+
+            if (data) {
+                setDialog({ type: 'success', title: 'Doble factor (TOTP)', message: 'Doble factor desactivado exitosamente.' });
+            }
+        } catch {
+            setDialog({ type: 'error', message: 'Error al desactivar 2FA. Intenta nuevamente más tarde.' });
+        } finally {
+            setIsLoading(false);
+            setTempPassword('');
+        }
+    };
     return (
         <SafeAreaView className="flex-1 bg-white">
             <ScrollView
@@ -240,6 +291,25 @@ export default function MyAccount() {
                     isOpen={dialog.type === '2fa-confirm'}
                     handleSubmit={handleConfirm2FA}
                     handleCancel={() => setDialog({ type: 'none' })}
+                />
+
+                <TFAPasswordInputDialog
+                    isOpen={dialog.type === 'disable-2fa-password'}
+                    onSubmit={handleDisable2FA_Password}
+                    onCancel={() => setDialog({ type: 'none' })}
+                    title='Desactivar doble factor'
+                    description='Ingresa tu contraseña para continuar'
+                />
+
+                <TFAConfirmDialog
+                    isOpen={dialog.type === 'disable-2fa-confirm'}
+                    handleSubmit={handleDisable2FA_Confirm}
+                    handleCancel={() => {
+                        setTempPassword('');
+                        setDialog({ type: 'none' });
+                    }}
+                    title='Desactivar doble factor'
+                    description='Ingresa el código de tu aplicación de autenticación'
                 />
 
                 <RemoveAccountConfirmDialog
@@ -313,7 +383,18 @@ export default function MyAccount() {
                                         {isCheckingProvider ? 'Cargando...' : 'Cambiar contraseña'}
                                     </ButtonText>
                                 </Button>
-                                {tfaEnabled ? null : (
+                                {tfaEnabled ? (
+                                    <Button
+                                        className="flex flex-row my-3 h-14 bg-[#F5F5F5] data-[active=true]:bg-[#b2a8a8] justify-start p-2 rounded-lg items-center"
+                                        isDisabled={isSocialProviderSession || isCheckingProvider}
+                                        onPress={handleDisable2FA_Btn}
+                                    >
+                                        <ButtonIcon as={KeyRoundIcon} className='w-7 h-7 mr-2 color-black data-[active=true]:color-white' />
+                                        <ButtonText className='color-black data-[active=true]:color-black'>
+                                            {isCheckingProvider ? 'Cargando...' : 'Desactivar doble factor'}
+                                        </ButtonText>
+                                    </Button>
+                                ) : (
                                     <Button
                                         className="flex flex-row my-3 h-14 bg-[#F5F5F5] data-[active=true]:bg-[#b2a8a8] justify-start p-2 rounded-lg items-center"
                                         isDisabled={isSocialProviderSession || isCheckingProvider}

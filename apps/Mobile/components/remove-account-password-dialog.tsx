@@ -53,7 +53,11 @@ export function RemoveAccountPasswordDialog({
                         <Button onPress={onCancel} className='bg-gray-500 data-[active=true]:bg-gray-600 rounded-lg'>
                             <ButtonText>Cancelar</ButtonText>
                         </Button>
-                        <Button onPress={handleSubmit} className="bg-pantone-red data-[active=true]:bg-pantone-red-dark rounded-xl">
+                        <Button 
+                            onPress={handleSubmit} 
+                            className="bg-pantone-red data-[active=true]:bg-pantone-red-dark rounded-xl"
+                            isDisabled={password.trim() === ''}
+                        >
                             <ButtonText>Eliminar cuenta</ButtonText>
                         </Button>
                     </AlertDialogFooter>

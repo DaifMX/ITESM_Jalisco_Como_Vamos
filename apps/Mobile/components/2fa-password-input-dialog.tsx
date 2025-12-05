@@ -17,10 +17,14 @@ export function TFAPasswordInputDialog({
     isOpen,
     onSubmit,
     onCancel,
+    title = 'Doble factor (TOTP)',
+    description = 'Ingresa tu contraseña para verificar que eres tú',
 }: {
     isOpen: boolean,
     onSubmit: any,
     onCancel: any,
+    title?: string,
+    description?: string,
 }) {
     const [inputValue, setInputValue] = useState('');
 
@@ -35,11 +39,11 @@ export function TFAPasswordInputDialog({
                 <AlertDialogBackdrop />
                 <AlertDialogContent className='flex justify-between'>
                     <AlertDialogHeader>
-                        <Heading>Doble factor (TOTP)</Heading>
+                        <Heading>{title}</Heading>
                     </AlertDialogHeader>
                     <AlertDialogBody className='my-2'>
                         <Text className='text-sm'>
-                            Ingresa tu contraseña para verificar que eres tú
+                            {description}
                         </Text>
                         <Input>
                             <InputField
@@ -54,7 +58,11 @@ export function TFAPasswordInputDialog({
                         <Button onPress={onCancel} className='bg-pantone-red data-[active=true]:bg-pantone-red-dark rounded-lg'>
                             <ButtonText>Cancelar</ButtonText>
                         </Button>
-                        <Button onPress={handleSubmit} className="bg-pantone-dark-blue data-[active=true]:bg-pantone-darkest-blue rounded-xl">
+                        <Button 
+                            onPress={handleSubmit} 
+                            className="bg-pantone-dark-blue data-[active=true]:bg-pantone-darkest-blue rounded-xl"
+                            isDisabled={inputValue.trim() === ''}
+                        >
                             <ButtonText>Continuar</ButtonText>
                         </Button>
                     </AlertDialogFooter>
