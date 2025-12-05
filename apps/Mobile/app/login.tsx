@@ -67,7 +67,7 @@ export default function HomeScreen() {
         email,
         password,
       });
-
+      console.log(result)
       if (result.error) {
         await authClient.signOut();
         const errorMessage = result.error.code
@@ -110,7 +110,7 @@ export default function HomeScreen() {
             setIsLoading(false);
           },
           onSuccess: () => {
-            router.push("/home");
+            router.replace("/home");
           },
           onError: (ctx: any) => {
             const errorMessage = ctx.error?.code
@@ -172,7 +172,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={["right", "left", "bottom"]}>
       <ParallaxScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
         headerImage={
