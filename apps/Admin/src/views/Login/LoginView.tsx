@@ -18,6 +18,9 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [show2FADialog, setShow2FADialog] = useState(false);
+  const [totpCode, setTotpCode] = useState('');
+  const [twoFactorError, setTwoFactorError] = useState('');
   
   const navigate = useNavigate();
 
@@ -50,12 +53,47 @@ export default function LoginPage() {
       if (result.error) {
         await authClient.signOut();
         setError(result.error.message || 'Invalid email or password');
-      } else if (result.data) {
-        navigate('/');
+      }  
+      
+      if (result.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((result.data as any).twoFactorRedirect) {
+          setShow2FADialog(true);
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
       setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handle2FASubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setTwoFactorError('');
+
+    try {
+      const result = await authClient.twoFactor.verifyTotp({
+        code: totpCode,
+      });
+
+      if (result.error) {
+        setTwoFactorError(result.error.message || 'Código inválido');
+      } else if (result.data) {
+        // Verificación exitosa, obtener sesión
+        const session = await authClient.getSession();
+        if (session.data?.user) {
+          setShow2FADialog(false);
+          navigate('/');
+        }
+      }
+    } catch (err) {
+      console.error('2FA error:', err);
+      setTwoFactorError('Error al verificar el código. Intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -169,6 +207,76 @@ export default function LoginPage() {
               </button>
             </form>
           </div>
+
+          {/* 2FA Dialog */}
+          {show2FADialog && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-800 rounded-2xl p-8 shadow-2xl w-full max-w-md relative">
+                <button
+                  onClick={() => {
+                    setShow2FADialog(false);
+                    setTotpCode('');
+                    setTwoFactorError('');
+                  }}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 mx-auto mb-4">
+                    <LockIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-100 mb-2">Verificación de Dos Factores</h2>
+                  <p className="text-sm text-gray-400">Ingresa el código de tu aplicación de autenticación</p>
+                </div>
+
+                <form onSubmit={handle2FASubmit} className="space-y-5">
+                  {twoFactorError && (
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2 animate-pulse">
+                      <AlertCircleIcon className="w-4 h-4" />
+                      {twoFactorError}
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Código TOTP</label>
+                    <input
+                      type="text"
+                      value={totpCode}
+                      onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full bg-gray-950/50 border border-gray-800 text-gray-200 text-center text-2xl font-mono rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all placeholder:text-gray-600 tracking-widest"
+                      placeholder="000000"
+                      maxLength={6}
+                      autoComplete="off"
+                      autoFocus
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading || totpCode.length !== 6}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl shadow-lg shadow-indigo-500/20 transition-all transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2Icon className="w-4 h-4 animate-spin" />
+                        Verificando...
+                      </>
+                    ) : (
+                      <>
+                        Verificar
+                        <ArrowRightIcon className="w-4 h-4 opacity-70" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 text-center">
              <p className="text-xs text-gray-600">
