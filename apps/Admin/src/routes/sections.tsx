@@ -6,6 +6,7 @@ import { NotFoundView } from "@/components/NotFoundView";
 
 export const HomePage = lazy(() => import('@/views/Home/HomeView'));
 export const UsersPage = lazy(() => import('@/views/UserManagement/UserManagementView'));
+export const QuestionsPage = lazy(() => import('@/views/Questions/QuestionView'));
 export const RolesPage = lazy(() => import('@/views/Roles/RolesView'));
 export const SettingsPage = lazy(() => import('@/views/Settings/SettingsView'));
 export const LoginPage = lazy(() => import('@/views/Login/LoginView'));
@@ -26,6 +27,14 @@ export function Router() {
             element: (
                 <ProtectedRoute>
                     <UsersPage />
+                </ProtectedRoute>
+            ) 
+        },
+        { 
+            path: '/questions', 
+            element: (
+                <ProtectedRoute>
+                    <QuestionsPage />
                 </ProtectedRoute>
             ) 
         },

@@ -77,4 +77,22 @@ export default class QuestionRepository {
             .innerJoin(answers, eq(questionData.answerId, answers.id))
             .groupBy(answers.id, answers.value);
     };
+
+    public toggleHidden = async (id: string) => {
+        const question = await this.db
+            .select()
+            .from(questions)
+            .where(eq(questions.id, id))
+            .limit(1);
+
+        if (!question.length) {
+            return null;
+        }
+
+        return await this.db
+            .update(questions)
+            .set({ isHidden: !question[0]?.isHidden })
+            .where(eq(questions.id, id))
+            .returning();
+    };
 }

@@ -94,7 +94,7 @@ export default class QuestionService {
 
         const cleanData = Object.entries(parsed).reduce((acc, [key, value]) => {
             if (value !== undefined && value !== null) {
-                acc[key as keyof QuestionNew] = value;
+                (acc as any)[key] = value;
             }
             return acc;
         }, {} as Partial<QuestionNew>);
@@ -117,5 +117,15 @@ export default class QuestionService {
         if (!answers || answers.length === 0) throw new ElementNotFoundError(`No se encontraron respuestas para la pregunta ID-${questionId}.`);
 
         return { questionId, answers };
+    };
+
+    public toggleHidden = async (id: string): Promise<Question> => {
+        const result = await this.repository.toggleHidden(id);
+        
+        if (!result || !result.length) {
+            throw new ElementNotFoundError(`Pregunta ID-${id} no encontrada en la base de datos.`);
+        }
+
+        return result[0]!;
     };
 }

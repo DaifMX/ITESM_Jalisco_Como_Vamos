@@ -1,4 +1,4 @@
-import { pgTable, uuid, text } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, boolean } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
@@ -9,7 +9,8 @@ export const questions = pgTable('questions', {
     xlsxCode: text('xlsxCode').notNull().unique(),
     value: text('value').notNull(),
     valueShort: text('valueShort'),
-    categoryId: uuid('categoryId').notNull().references(() => categories.id)
+    categoryId: uuid('categoryId').notNull().references(() => categories.id),
+    isHidden: boolean('isHidden').notNull().default(false)
 });
 
 export const questionRelations = relations(questions, ({ one, many }) => ({

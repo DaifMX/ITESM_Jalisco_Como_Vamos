@@ -11,6 +11,7 @@ import {
     SparklesIcon,
     UsersIcon,
     WrenchIcon,
+    HelpCircleIcon,
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -27,6 +28,7 @@ interface NavItem {
 const navItems: NavItem[] = [
     { id: 'dashboard', path: '/', icon: BarChart3Icon, label: 'Dashboard' },
     { id: 'users', path: '/users', icon: UsersIcon, label: 'Usuarios' },
+    { id: 'questions', path: '/questions', icon: HelpCircleIcon, label: 'Preguntas' },
     { id: 'roles', path: '/roles', icon: SparklesIcon, label: 'Roles y permisos' },
     { id: 'settings', path: '/settings', icon: WrenchIcon, label: 'Configuración' },
 ];

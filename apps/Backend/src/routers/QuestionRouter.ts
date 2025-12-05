@@ -11,6 +11,7 @@ export default class QuestionRouter extends BaseRouter {
         this.get('/:id/answers', ['PUBLIC'], controller.getAnswersByQuestionId);
         this.post('/', ['ADMIN'], controller.create);
         this.patch('/:id', ['ADMIN'], controller.update);
+        this.patch('/:id/toggle-hidden', ['ADMIN'], controller.toggleHidden);
         this.post('/push', ['ADMIN'], controller.pushResponse);
     }
 }

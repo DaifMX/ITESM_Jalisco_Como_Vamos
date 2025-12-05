@@ -103,4 +103,20 @@ export default class QuestionController {
             return res.sendInternalServerError(err.message);
         }
     };
+
+    public toggleHidden = async (req: Request, res: Response) => {
+        try {
+            const id = req.params.id;
+            if (!id) throw new RuntimeError('Id no recibido.');
+
+            const question = await this.service.toggleHidden(id);
+            return res.sendSuccess(question);
+
+        } catch (err: any) {
+            console.error(err)
+            if (err instanceof ElementNotFoundError) return res.sendNotFound(err.message);
+            if (err instanceof RuntimeError) return res.sendBadRequest(err.message);
+            return res.sendInternalServerError(err.message);
+        }
+    };
 }
