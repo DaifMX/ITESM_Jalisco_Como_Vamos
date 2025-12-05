@@ -228,6 +228,7 @@ export default function HomeScreen() {
                   backgroundColor: "#F5F5F5",
                   borderWidth: 1,
                   borderColor: emailFocused ? "#000000" : "transparent",
+                  color: '#ececec'
                 }}
               />
             </View>
