@@ -1,6 +1,6 @@
 {
   "name": "@jcv/jalisco_como_vamos",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Fullstack application for Jalisco Como Vamos latest state level public consultation.",
   "scripts": {
     "db:generate": "pnpm --filter @jcv/api db:generate",

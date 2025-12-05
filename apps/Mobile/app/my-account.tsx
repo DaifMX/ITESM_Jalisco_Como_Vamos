@@ -15,15 +15,19 @@ import ErrorDialog from "@/components/error-dialog";
 import LoadingDialog from "@/components/loading-dialog";
 import { TFAPasswordInputDialog } from "@/components/2fa-password-input-dialog";
 import { TFASecretCopyDialog } from "@/components/2fa-secret-copy-dialog";
+import { RemoveAccountConfirmDialog } from "@/components/remove-account-confirm-dialog";
+import { RemoveAccountPasswordDialog } from "@/components/remove-account-password-dialog";
+import { RemoveAccountTOTPDialog } from "@/components/remove-account-totp-dialog";
 
 import getBetterAuthErrorMessage_ES from "@/functions/getBetterAuthErrorMessage_ES";
 import { isUsingSocialProvider } from "@/functions/isUsingSocialProvider";
 
 import { ArrowLeftIcon, KeyRoundIcon, RectangleEllipsisIcon, LogOutIcon, TrashIcon } from "lucide-react-native";
 import { GenericMessageDialog } from "@/components/success-dialog";
+import { TFAConfirmDialog } from "@/components/2fa-confirm-dialog";
 
 type DialogState = {
-    type: 'none' | 'error' | 'password' | 'change-password-sheet' | '2fa-secret' | '2fa-confirm' | 'name' | 'success';
+    type: 'none' | 'error' | 'change-password-sheet' | '2fa-password' | '2fa-secret' | '2fa-confirm' | 'name' | 'success' | 'remove-confirm' | 'remove-password' | 'remove-totp';
     title?: string;
     message?: string;
     callback?: (...args: any[]) => Promise<any>;
@@ -33,12 +37,14 @@ export default function MyAccount() {
     const router = useRouter();
 
     const session = authClient.useSession();
+    const tfaEnabled = session.data?.user.twoFactorEnabled;
 
     const [isLoading, setIsLoading] = useState(false);
     const [isCheckingProvider, setIsCheckingProvider] = useState(true);
     const [isSocialProviderSession, setIsSocialProviderSession] = useState(true);
     const [dialog, setDialog] = useState<DialogState>({ type: 'none' });
     const [secret2FA, setSecret2FA] = useState('');
+    const [tempPassword, setTempPassword] = useState('');
 
     useEffect(() => {
         let isMounted = true;
@@ -98,10 +104,6 @@ export default function MyAccount() {
         }
     };
 
-    const handleChangePassword_Btn = () => {
-        setDialog({ type: 'change-password-sheet', callback: handleChangePassword });
-    };
-
     const handleAdd2FA = async (password: string) => {
         try {
             const { data, error } = await authClient.twoFactor.enable({
@@ -130,8 +132,19 @@ export default function MyAccount() {
         }
     };
 
-    const handleAdd2FA_Btn = async () => {
-        setDialog({ type: 'password', title: 'Doble factor', callback: handleAdd2FA });
+    const handleConfirm2FA = async (code: string) => {
+        try {
+            const { data, error } = await authClient.twoFactor.verifyTotp({
+                code,
+            });
+
+            console.log({ data, error });
+            if (data) setDialog({ type: 'success', title: 'Doble factor (TOTP)', message: 'Doble factor habilitado exitosamente.' });
+            if (error) setDialog({ type: 'error', message: error.message ?? 'Error al habilitar 2FA. Intenta nuevamente más tarde.' });
+
+        } catch {
+            setDialog({ type: 'error', message: 'Error al habilitar 2FA. Intenta nuevamente más tarde.' });
+        }
     };
 
     const handleLogout = async () => {
@@ -146,10 +159,14 @@ export default function MyAccount() {
         }
     };
 
-    const handleRemoveAccount = async (password: string) => {
+    const handleRemoveAccount = async (password: string, totpCode?: string) => {
         try {
+            setDialog({ type: 'none' });
             setIsLoading(true);
-            const { error } = await authClient.deleteUser({ password });
+            const { error } = await authClient.deleteUser({ 
+                password,
+                ...(totpCode && { totpCode })
+            });
 
             if (error) {
                 const errorMessage = error?.code
@@ -167,10 +184,21 @@ export default function MyAccount() {
         }
     };
 
-    const handleRemoveAccount_Btn = async () => {
-        setDialog({ type: 'password', title: 'Eliminar cuenta', callback: handleRemoveAccount });
+    const handleChangePassword_Btn = () => {
+        setDialog({ type: 'change-password-sheet', callback: handleChangePassword });
     };
 
+    const handleRemoveAccount_Btn = async () => {
+        setDialog({ type: 'remove-confirm', callback: handleRemoveAccount });
+    };
+
+    const handleAdd2FA_Btn = async () => {
+        setDialog({ type: '2fa-password', title: 'Doble factor', callback: handleAdd2FA });
+    }
+
+    const handleConfirmCopyDiag2FA_Btn = () => {
+        setDialog({ type: '2fa-confirm' });
+    };
     return (
         <SafeAreaView className="flex-1 bg-white">
             <ScrollView
@@ -194,18 +222,52 @@ export default function MyAccount() {
                     onSubmit={() => setDialog({ type: 'none' })}
                 />
 
+                <TFAPasswordInputDialog
+                    isOpen={dialog.type === '2fa-password'}
+                    onSubmit={dialog.callback}
+                    onCancel={() => setDialog({ type: 'none' })}
+                />
+
                 <TFASecretCopyDialog
                     isOpen={dialog.type === '2fa-secret'}
                     title={'Google Authenticator'}
                     value={secret2FA}
-                    handleSubmit={() => setDialog({ type: 'none' })}
+                    handleSubmit={handleConfirmCopyDiag2FA_Btn}
                     handleCancel={() => setDialog({ type: 'none' })}
                 />
 
-                <TFAPasswordInputDialog
-                    isOpen={dialog.type === 'password'}
-                    onSubmit={dialog.callback}
+                <TFAConfirmDialog
+                    isOpen={dialog.type === '2fa-confirm'}
+                    handleSubmit={handleConfirm2FA}
+                    handleCancel={() => setDialog({ type: 'none' })}
+                />
+
+                <RemoveAccountConfirmDialog
+                    isOpen={dialog.type === 'remove-confirm'}
+                    onConfirm={() => setDialog({ type: 'remove-password' })}
                     onCancel={() => setDialog({ type: 'none' })}
+                />
+
+                <RemoveAccountPasswordDialog
+                    isOpen={dialog.type === 'remove-password'}
+                    onSubmit={(password) => {
+                        setTempPassword(password);
+                        if (tfaEnabled) {
+                            setDialog({ type: 'remove-totp' });
+                        } else {
+                            handleRemoveAccount(password);
+                        }
+                    }}
+                    onCancel={() => setDialog({ type: 'none' })}
+                />
+
+                <RemoveAccountTOTPDialog
+                    isOpen={dialog.type === 'remove-totp'}
+                    onSubmit={(code) => handleRemoveAccount(tempPassword, code)}
+                    onCancel={() => {
+                        setTempPassword('');
+                        setDialog({ type: 'none' });
+                    }}
                 />
 
                 <ChangePasswordSheet
@@ -251,16 +313,18 @@ export default function MyAccount() {
                                         {isCheckingProvider ? 'Cargando...' : 'Cambiar contraseña'}
                                     </ButtonText>
                                 </Button>
-                                <Button
-                                    className="flex flex-row my-3 h-14 bg-[#F5F5F5] data-[active=true]:bg-[#b2a8a8] justify-start p-2 rounded-lg items-center"
-                                    isDisabled={isSocialProviderSession || isCheckingProvider}
-                                    onPress={handleAdd2FA_Btn}
-                                >
-                                    <ButtonIcon as={KeyRoundIcon} className='w-7 h-7 mr-2 color-black data-[active=true]:color-white' />
-                                    <ButtonText className='color-black data-[active=true]:color-black'>
-                                        {isCheckingProvider ? 'Cargando...' : 'Habilitar doble factor'}
-                                    </ButtonText>
-                                </Button>
+                                {tfaEnabled ? null : (
+                                    <Button
+                                        className="flex flex-row my-3 h-14 bg-[#F5F5F5] data-[active=true]:bg-[#b2a8a8] justify-start p-2 rounded-lg items-center"
+                                        isDisabled={isSocialProviderSession || isCheckingProvider}
+                                        onPress={handleAdd2FA_Btn}
+                                    >
+                                        <ButtonIcon as={KeyRoundIcon} className='w-7 h-7 mr-2 color-black data-[active=true]:color-white' />
+                                        <ButtonText className='color-black data-[active=true]:color-black'>
+                                            {isCheckingProvider ? 'Cargando...' : 'Habilitar doble factor'}
+                                        </ButtonText>
+                                    </Button>
+                                )}
                             </View>
                             <View>
                                 <Divider />
@@ -283,6 +347,6 @@ export default function MyAccount() {
                         : <></>
                 }
             </ScrollView>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }

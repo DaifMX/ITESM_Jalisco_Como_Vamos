@@ -311,17 +311,10 @@ export default function QuestionData() {
                             <Pressable 
                                 onPress={exportPDF} 
                                 disabled={isExportingPDF}
-                                className="bg-pantone-red rounded-xl p-2.5 active:opacity-80"
+                                className="bg-gray-300 rounded-xl p-2.5 active:opacity-80"
                                 style={({ pressed }) => [{ opacity: pressed || isExportingPDF ? 0.6 : 1 }]}
                             >
-                                <FileTextIcon size={20} color="#ffffff" />
-                            </Pressable>
-                            <Pressable 
-                                onPress={exportJSON} 
-                                className="bg-gray-300 rounded-xl p-2.5 active:opacity-80"
-                                style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
-                            >
-                                <ShareIcon size={20} color="#6b7280" />
+                                <FileTextIcon size={20} color="#6b7280" />
                             </Pressable>
                             <Pressable 
                                 onPress={() => setFilterOpen(true)} 

@@ -1,7 +1,4 @@
 import { useState } from 'react';
-import { Pressable } from 'react-native';
-
-import * as Clipboard from 'expo-clipboard';
 
 import {
     AlertDialog,
@@ -15,15 +12,9 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Input, InputField } from '@/components/ui/input';
-import { Box } from '@/components/ui/box';
-import { CopyIcon } from 'lucide-react-native';
 
-export function TFAConfirmDialog({ isOpen, copyCode, onClose }: { isOpen: boolean, copyCode: string, onClose: any }) {
+export function TFAConfirmDialog({ isOpen, handleSubmit, handleCancel }: { isOpen: boolean, handleSubmit: any, handleCancel: any }) {
     const [code, setCode] = useState('');
-
-    const handleCopy = async () => {
-        await Clipboard.setStringAsync(copyCode);
-    };
 
     return (
         <>
@@ -31,17 +22,10 @@ export function TFAConfirmDialog({ isOpen, copyCode, onClose }: { isOpen: boolea
                 <AlertDialogBackdrop />
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <Heading>Confirmar doble factor</Heading>
+                        <Heading>Doble factor (TOTP)</Heading>
                     </AlertDialogHeader>
-                    <AlertDialogBody>
-                        <Box>
-                            <Pressable onPress={handleCopy} className="flex-row items-center gap-2 p-3 bg-gray-100 rounded-lg mb-4">
-                                <CopyIcon size={20} />
-                                <Text className="flex-1">{copyCode}</Text>
-                            </Pressable>
-                        </Box>
-
-                        <Text className="mb-4">Código:</Text>
+                    <AlertDialogBody className="mt-3 mb-4">
+                        <Text className="">Confirmar doble factor</Text>
                         <Input>
                             <InputField
                                 value={code}
@@ -50,10 +34,12 @@ export function TFAConfirmDialog({ isOpen, copyCode, onClose }: { isOpen: boolea
                             />
                         </Input>
                     </AlertDialogBody>
-
                     <AlertDialogFooter>
-                        <Button variant="outline" onPress={onClose} className="mr-3">
-                            <ButtonText>Cerrar</ButtonText>
+                        <Button onPress={handleCancel} className='bg-pantone-red data-[active=true]:bg-pantone-red-dark rounded-lg'>
+                            <ButtonText>Cancelar</ButtonText>
+                        </Button>
+                        <Button onPress={() => handleSubmit(code)} className="bg-pantone-dark-blue data-[active=true]:bg-pantone-darkest-blue rounded-xl">
+                            <ButtonText>Continuar</ButtonText>
                         </Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>

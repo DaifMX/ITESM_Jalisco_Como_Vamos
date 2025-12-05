@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View, Text } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { authClient } from "@/lib/auth-client";
@@ -9,6 +9,7 @@ import ErrorDialog from "@/components/error-dialog";
 import LoadingDialog from "@/components/loading-dialog";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { Footer } from "@/components/footer";
+import TwoFactorVerifyDialog from "@/components/2fa-verify-dialog";
 
 import { Divider } from "@/components/ui/divider";
 import { ThemedText } from "@/components/themed-text";
@@ -16,7 +17,6 @@ import { ThemedView } from "@/components/themed-view";
 import {
   Button,
   ButtonIcon,
-  ButtonSpinner,
   ButtonText,
 } from "@/components/ui/button";
 
@@ -25,22 +25,10 @@ import { LoginButton } from "@/components/login-btn";
 
 import getBetterAuthErrorMessage_ES from "@/functions/getBetterAuthErrorMessage_ES";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  AlertDialog,
-  AlertDialogBackdrop,
-  AlertDialogBody,
-  AlertDialogCloseButton,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-} from "@/components/ui/alert-dialog";
-import { Heading } from "@/components/ui/heading";
-import { Input, InputField } from "@/components/ui/input";
-import { CloseIcon, Icon } from "@/components/ui/icon";
 
 const GoogleIcon = () => (
   <Image
-    source={require("@/assets/ico/google-ico.png")}
+    source={require("@/assets/ico/googleico.png")}
     style={{ width: 20, height: 20, marginRight: 8 }}
   />
 );
@@ -64,7 +52,6 @@ export default function HomeScreen() {
   // Estados para 2FA
   const [requires2FA, setRequires2FA] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [tempSession, setTempSession] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
@@ -76,32 +63,27 @@ export default function HomeScreen() {
     try {
       setIsLoading(true);
 
-      await authClient.signIn.email(
-        { email, password },
-        {
-          onSuccess: (ctx) => {
-            // Verificar si requiere 2FA
-            if (ctx.data?.twoFactorRedirect) {
-              console.log("need pussy");
-              // Usuario tiene 2FA habilitado, mostrar input de código
-              setRequires2FA(true);
-              setTempSession(ctx.data); // Guardar datos temporales
-              alert("Ingresa el código de tu aplicación de autenticación");
-            } else {
-              // Login exitoso sin 2FA
-              console.log(ctx);
-              router.replace("/home");
-            }
-          },
-          onError: (ctx: any) => {
-            const errorMessage = ctx.error?.code
-              ? getBetterAuthErrorMessage_ES(ctx.error.code)
-              : ctx.error.message;
-            setError(errorMessage);
-            setIsErrorDiagOpen(true);
-          },
+      const result = await authClient.signIn.email({
+        email,
+        password,
+      });
+
+      if (result.error) {
+        await authClient.signOut();
+        const errorMessage = result.error.code
+          ? getBetterAuthErrorMessage_ES(result.error.code)
+          : (result.error.message || "Error de autenticación");
+        setError(errorMessage);
+        setIsErrorDiagOpen(true);
+      }
+
+      if (result.data) {
+        if ((result.data as any).twoFactorRedirect) {
+          setRequires2FA(true);
+        } else {
+          router.replace("/home");
         }
-      );
+      }
     } catch (err: any) {
       const errorMessage = err.code
         ? getBetterAuthErrorMessage_ES(err.code)
@@ -152,40 +134,33 @@ export default function HomeScreen() {
 
   const handleVerify2FA = async () => {
     if (!twoFactorCode || twoFactorCode.length !== 6) {
-      alert("Ingresa un código válido de 6 dígitos");
+      setError("Ingresa un código válido de 6 dígitos");
+      setIsErrorDiagOpen(true);
       return;
     }
 
     try {
       setIsVerifying(true);
 
-      // Verificar código 2FA con Better Auth
-      const result = await authClient.twoFactor.verifyTotp(
-        {
-          code: twoFactorCode,
-        },
-        {
-          onSuccess: async (ctx) => {
-            console.log("2FA verificado exitosamente");
-            console.log(ctx);
-            // Obtener sesión actualizada
-            const session = await authClient.getSession({});
+      const result = await authClient.twoFactor.verifyTotp({
+        code: twoFactorCode,
+      });
 
-            if (session?.data?.user) {
-              console.log("hay user pa");
-              router.replace("/home");
-            }
-          },
-          onError: (ctx) => {
-            console.error("Error en 2FA:", ctx.error);
-            alert("Verifica el código e intenta nuevamente");
-            setTwoFactorCode(""); // Limpiar input
-          },
+      if (result.error) {
+        setError(result.error.message || "Código inválido");
+        setIsErrorDiagOpen(true);
+      } else if (result.data) {
+        // Verificación exitosa, obtener sesión
+        const session = await authClient.getSession();
+        if (session.data?.user) {
+          setRequires2FA(false);
+          router.replace("/home");
         }
-      );
-    } catch (error: any) {
-      console.error("Error", error);
-      alert("No se pudo verificar el código");
+      }
+    } catch (err) {
+      console.error("2FA error:", err);
+      setError("Error al verificar el código. Intenta de nuevo.");
+      setIsErrorDiagOpen(true);
     } finally {
       setIsVerifying(false);
     }
@@ -194,7 +169,6 @@ export default function HomeScreen() {
   const handleCancel2FA = () => {
     setRequires2FA(false);
     setTwoFactorCode("");
-    setTempSession(null);
   };
 
   return (
@@ -277,63 +251,6 @@ export default function HomeScreen() {
                   borderColor: passwordFocused ? "#000000" : "transparent",
                 }}
               />
-
-              {requires2FA && (
-                <AlertDialog isOpen={requires2FA} onClose={handleCancel2FA}>
-                  <AlertDialogBackdrop />
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <Heading size="lg">Verificación en dos pasos</Heading>
-                      <AlertDialogCloseButton>
-                        <Icon as={CloseIcon} />
-                      </AlertDialogCloseButton>
-                    </AlertDialogHeader>
-
-                    <AlertDialogBody className="m-2">
-                      <Text className="mb-4 text-typography-500">
-                        Ingresa el código de 6 dígitos de tu aplicación de
-                        autenticación
-                      </Text>
-
-                      <Input variant="outline" size="xl">
-                        <InputField
-                          placeholder="000000"
-                          value={twoFactorCode}
-                          onChangeText={(text) => setTwoFactorCode(text)}
-                          keyboardType="number-pad"
-                          maxLength={6}
-                          className="text-center text-2xl font-bold tracking-widest"
-                          autoFocus
-                        />
-                      </Input>
-                    </AlertDialogBody>
-
-                    <AlertDialogFooter>
-                      <Button
-                        variant="outline"
-                        action="secondary"
-                        onPress={handleCancel2FA}
-                        isDisabled={isVerifying}
-                        className="mr-3"
-                      >
-                        <ButtonText>Cancelar</ButtonText>
-                      </Button>
-
-                      <Button
-                        action="primary"
-                        onPress={handleVerify2FA}
-                        isDisabled={isVerifying || twoFactorCode.length !== 6}
-                      >
-                        {isVerifying ? (
-                          <ButtonSpinner />
-                        ) : (
-                          <ButtonText>Verificar</ButtonText>
-                        )}
-                      </Button>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
             </View>
           </View>
         </ThemedView>
@@ -379,6 +296,16 @@ export default function HomeScreen() {
           </Button>
         </ThemedView>
       </ParallaxScrollView>
+      
+      <TwoFactorVerifyDialog
+        isOpen={requires2FA}
+        twoFactorCode={twoFactorCode}
+        isVerifying={isVerifying}
+        onCodeChange={setTwoFactorCode}
+        onVerify={handleVerify2FA}
+        onCancel={handleCancel2FA}
+      />
+      
       <Footer />
     </SafeAreaView>
   );
