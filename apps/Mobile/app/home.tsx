@@ -6,6 +6,7 @@ import { ScrollView, View } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
 import { fetcher } from "@/lib/axios";
+import { useAvatarNavigation } from "@/hooks/useAvatarNavigation";
 
 import { AvatarSection } from "@/components/avatar-section";
 
@@ -23,9 +24,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export type Session = typeof authClient.$Infer.Session;
 
 export default function Home() {
-    const router = useRouter();
-
     const session = authClient.useSession();
+    const { handleMyAccount, handleInfo, handleSignIn, handleSignOut } = useAvatarNavigation();
 
     const [searchFocused, setSearchFocused] = useState(false);
     const [searchBarVal, setSearchBarVal] = useState("");
@@ -43,10 +43,10 @@ export default function Home() {
                         <View className="">
                             <AvatarSection
                                 user={session.data?.user}
-                                handleMyAccount={() => router.push('/my-account')}
-                                handleInfo={() => router.push('/info')}
-                                handleSignIn={() => router.push('/login')}
-                                handleSignOut={() => { authClient.signOut(); router.push('/login') }}
+                                handleMyAccount={handleMyAccount}
+                                handleInfo={handleInfo}
+                                handleSignIn={handleSignIn}
+                                handleSignOut={handleSignOut}
                             />
                         </View>
                     </View>

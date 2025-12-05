@@ -15,6 +15,7 @@ import { captureRef } from 'react-native-view-shot';
 import { authClient } from "@/lib/auth-client";
 import axiosInstance, { fetcher } from "@/lib/axios";
 import { exportChartToPDF } from "@/functions/exportPDF";
+import { useAvatarNavigation } from "@/hooks/useAvatarNavigation";
 
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
@@ -25,7 +26,7 @@ import { FilterModal } from "@/components/question-data/FilterModal";
 import { ChartCard } from "@/components/question-data/ChartCard";
 import ErrorDialog from "@/components/error-dialog";
 
-import { ArrowLeftIcon, ShareIcon, FilterIcon, FileTextIcon } from "lucide-react-native";
+import { ArrowLeftIcon, FilterIcon, FileTextIcon } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ======== Tipos ========
@@ -72,6 +73,7 @@ interface CommentItem {
 // ======== Componente principal ========
 export default function QuestionData() {
     const session = authClient.useSession();
+    const { handleMyAccount, handleInfo, handleSignIn, handleSignOut } = useAvatarNavigation();
     const params = useLocalSearchParams();
     const questionId = params.id as string;
 
@@ -287,10 +289,10 @@ export default function QuestionData() {
                     <ThemedText type="title">{data.question.xlsxCode}</ThemedText>
                     <AvatarSection
                         user={session.data?.user}
-                        handleMyAccount={() => router.push('/my-account')}
-                        handleInfo={() => router.push('/info')}
-                        handleSignIn={() => router.push('/login')}
-                        handleSignOut={() => { authClient.signOut(); router.push('/login') }}
+                        handleMyAccount={handleMyAccount}
+                        handleInfo={handleInfo}
+                        handleSignIn={handleSignIn}
+                        handleSignOut={handleSignOut}
                     />
                 </View>
             </View>

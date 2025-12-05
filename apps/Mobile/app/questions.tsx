@@ -4,6 +4,7 @@ import useSWR from "swr";
 
 import { authClient } from "@/lib/auth-client";
 import { fetcher } from "@/lib/axios";
+import { useAvatarNavigation } from "@/hooks/useAvatarNavigation";
 
 import { AvatarSection } from "@/components/avatar-section";
 import { BasicElementCard } from "@/components/basic-elem-card";
@@ -30,6 +31,7 @@ export default function Question() {
   const params = useLocalSearchParams();
 
   const session = authClient.useSession();
+  const { handleMyAccount, handleInfo, handleSignIn, handleSignOut } = useAvatarNavigation();
 
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchBarVal, setSearchBarVal] = useState("");
@@ -59,13 +61,10 @@ export default function Question() {
             <ThemedText type="title">Preguntas</ThemedText>
             <AvatarSection
               user={session.data?.user}
-              handleMyAccount={() => router.push("/my-account")}
-              handleInfo={() => router.push("/info")}
-              handleSignIn={() => router.push("/login")}
-              handleSignOut={() => {
-                authClient.signOut();
-                router.push("/login");
-              }}
+              handleMyAccount={handleMyAccount}
+              handleInfo={handleInfo}
+              handleSignIn={handleSignIn}
+              handleSignOut={handleSignOut}
             />
           </View>
           <ThemedView lightColor="transparent" darkColor="transparent">

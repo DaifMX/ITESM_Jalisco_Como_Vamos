@@ -1,5 +1,5 @@
 import { Pressable } from "react-native";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Menu, MenuItem, MenuItemLabel } from "@/components/ui/menu";
@@ -45,25 +45,27 @@ export const AvatarSection = ({
         ];
     }, [user, handleMyAccount, handleInfo, handleSignIn, handleSignOut]);
 
+    const renderTrigger = useCallback(({ ...triggerProps }: any) => {
+        return (
+            <Pressable {...triggerProps}>
+                <Avatar size='md' className="bg-slate-300">
+                    {
+                        user
+                            ? <AvatarFallbackText>
+                                {user?.name}
+                            </AvatarFallbackText>
+                            : <Icon as={UserIcon} size="lg" className="stroke-white" />
+                    }
+                </Avatar>
+            </Pressable>
+        );
+    }, [user]);
+
     return (
         <Menu
             placement="bottom right"
             offset={4}
-            trigger={({ ...triggerProps }) => {
-                return (
-                    <Pressable {...triggerProps}>
-                        <Avatar size='md' className="bg-slate-300">
-                            {
-                                user
-                                    ? <AvatarFallbackText>
-                                        {user?.name}
-                                    </AvatarFallbackText>
-                                    : <Icon as={UserIcon} size="lg" className="stroke-white" />
-                            }
-                        </Avatar>
-                    </Pressable>
-                );
-            }}
+            trigger={renderTrigger}
         >
             {menuItems.map(item => {
                 const IconComponent = item.icon;
