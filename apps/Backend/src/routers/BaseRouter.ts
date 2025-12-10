@@ -1,13 +1,13 @@
 import { Router } from 'express';
 
-import { rbacMiddleware } from '@/middleware/rbac_middleware';
+import { rbacMiddleware } from '@/middlewares/rbac-middleware';
 
 import { InternalError } from '@jcv/errors';
 
 import type { Request, RequestHandler, Response, NextFunction } from 'express';
 import type { AuthPolicy } from '@/types/auth-policy-types';
 
-export abstract class BaseRouter {
+export default abstract class BaseRouter {
     private router;
 
     constructor() {
@@ -49,7 +49,7 @@ export abstract class BaseRouter {
     //=========================//
 
     private validatePolicies = (policies: AuthPolicy[], path: string): boolean => {
-        if (!policies || !Array.isArray(policies)) throw new InternalError(`No policies on ${path}`);
+        if (!policies.length || !Array.isArray(policies)) throw new InternalError(`No policies on ${path}`);
 
         const allowedPolicies = ['PUBLIC', 'AUTHORIZED', 'USER', 'ADMIN'];
 
@@ -65,15 +65,15 @@ export abstract class BaseRouter {
 
     private generateCustomResponses(_req: Request, res: Response, next: NextFunction) {
         //2XX
-        res.sendSuccess = (payload: Object, msg?: string, pagination?: Record<string, any>) => res.status(200).json({
+        res.sendSuccess = (payload: Record<string, any>, msg?: string, pagination?: Record<string, any>) => res.status(200).json({
             payload,
             status: 'success',
             msg,
             pagination,
         });
 
-        res.sendCreated = (payload: Object, msg?: string) => res.status(201).json({ status: 'success', payload, msg });
-        res.sendAccepted = (payload: Object, msg?: string) => res.status(202).json({ status: 'success', payload, msg });
+        res.sendCreated = (payload: Record<string, any>, msg?: string) => res.status(201).json({ status: 'success', payload, msg });
+        res.sendAccepted = (payload: Record<string, any>, msg?: string) => res.status(202).json({ status: 'success', payload, msg });
 
         // 4XX
         res.sendBadRequest = (reason: string = 'Razon de error desconocida', fields?: string) => res.status(400).json({

@@ -1,12 +1,29 @@
 %% Implementado por Daif
 
 classDiagram
-    User "1" <-- "1" Session : belongs to
-    User "1" <-- "1" Account : belongs to
-    User "1" <-- "*" Comment : belongs to
+    %% Better-Auth Core Tables
+    User "1" <-- "*" Session : has many
+    User "1" <-- "*" Account : has many
+    User "1" <-- "*" TwoFactor : has many
+    
+    %% Application Tables
+    User "1" <-- "*" Comment : creates
+    User "1" <-- "*" CommentLike : gives
+    
+    Question "1" <-- "*" Comment : has many
+    Comment "1" <-- "*" CommentLike : has many
+    
+    Question "*" <-- "*" QuestionData : through
+    Category "1" --> "*" Question : contains
+    Answer "1" --> "*" QuestionData : has many
+    
+    Segment "1" <-- "*" SegmentValue : has many
+    SegmentValue "1" <-- "*" QuestionData : filters
 
+    %% Better-Auth Tables
     class Verification {
-        - id : string
+        - id : string [PK]
+        - identifier : string
         - value : string
         - expiresAt : Date
         - createdAt : Date
@@ -16,9 +33,14 @@ classDiagram
     class User {
         - id : string [PK]
         - name : string
-        - email : string
-        - emailVerified : bool
+        - email : string [UNIQUE]
+        - emailVerified : boolean
         - image : string
+        - role : string
+        - twoFactorEnabled : boolean
+        - banned : boolean
+        - banReason : string
+        - banExpires : Date
         - createdAt : Date
         - updatedAt : Date
     }
@@ -37,6 +59,7 @@ classDiagram
     class Account {
         - id : string [PK]
         - userId : string [FK]
+        - accountId : string
         - providerId : string
         - accessToken : string
         - refreshToken : string
@@ -49,59 +72,61 @@ classDiagram
         - updatedAt : Date
     }
 
-    %% Versión normalizada de XLSX a SQL
-    
-    Question"1" <--"*" Comment : has many
-    Question"*" <-- "1" QuestionData : through
-    Category"1" --> "*" Question : has many
-    Answer "*" --> "1" QuestionData : has many
-
-    class Category {
+    class TwoFactor {
         - id : string [PK]
-        - name : string
+        - secret : string
+        - backupCodes : string
+        - userId : string [FK]
+    }
+    
+    %% Application Tables
+    class Category {
+        - id : uuid [PK]
+        - name : string [UNIQUE]
     }
 
     class Question {
-        - id : string [PK]
-        - xlsxId : string
-        - question : string
-        - categoryId : string [FK]
-        + getAll(...params)
-        + getById(...params)
-        + load(xlsxPath : string)
-    }
-
-    class QuestionData {
-        - id : string [PK]
-        - answerId : string [FK]
-        - questionId : string [FK]
-        - segmentValueId : string [FK]
-    }
-
-    Segment"1" <-- "*" SegmentValue : belongs to
-    SegmentValue <-- QuestionData : belongs to
-
-    class Segment {
-        - id : string [PK]
-        - name : string
-    }
-
-    class SegmentValue {
-        - id : string [PK]
-        - name : string
-        - segmentId : string [FK]
+        - id : uuid [PK]
+        - xlsxCode : string [UNIQUE]
+        - value : string
+        - valueShort : string
+        - categoryId : uuid [FK]
     }
 
     class Answer {
-        - id : string [PK]
-        - answer : float
+        - id : uuid [PK]
+        - value : string
+    }
+
+    class QuestionData {
+        - id : uuid [PK]
+        - answerId : uuid [FK]
+        - questionId : uuid [FK]
+        - result : numeric
+        - segmentValueId : uuid [FK]
+    }
+
+    class Segment {
+        - id : uuid [PK]
+        - name : string [UNIQUE]
+    }
+
+    class SegmentValue {
+        - id : uuid [PK]
+        - name : string
+        - segmentId : uuid [FK]
     }
 
     class Comment {
-        - id : string [PK]
-        - userId : string [FK]
-        - recordId : string [FK]
+        - id : uuid [PK]
         - msgContent : string
+        - userId : string [FK]
+        - questionId : uuid [FK]
         - createdAt : Date
-        + send()
+    }
+
+    class CommentLike {
+        - commentId : uuid [FK] [PK]
+        - userId : string [FK] [PK]
+        - createdAt : Date
     }

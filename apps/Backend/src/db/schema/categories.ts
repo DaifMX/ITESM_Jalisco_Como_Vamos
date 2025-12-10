@@ -1,13 +1,15 @@
 import { pgTable, uuid, text } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 
-import { question } from '@/db/schema';
+import { questions } from '@/db/schema';
 
-export const category = pgTable('categories', {
-    id: uuid().primaryKey(),
-    name: text().unique()
+export const categories = pgTable('categories', {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    name: text('name').unique(),
+    icon: text('icon'),
+    color: text('color'),
 });
 
-export const categoryRelations = relations(category, ({ many }) => ({
-    question: many(question)
+export const categoryRelations = relations(categories, ({ many }) => ({
+    question: many(questions),
 }));

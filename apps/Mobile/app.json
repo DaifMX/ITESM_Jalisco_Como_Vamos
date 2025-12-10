@@ -1,16 +1,21 @@
 {
   "expo": {
-    "name": "Jalisco_Como_Vamos_App",
-    "slug": "Jalisco_Como_Vamos_App",
+    "name": "Jalisco Como Vamos App",
+    "slug": "jalisco-como-vamos-app",
+    "owner": "daifmx",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "jaliscocomovamosapp",
+    "scheme": "jcv",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Jalisco-Como-Vamos-App"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.anonymous.Jalisco-Como-Vamos-App",
+      "infoPlist": {
+        "MinimumOSVersion": "14.0",
+        "NSFaceIDUsageDescription": "Face ID sera utilizado para iniciar sesión"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -45,6 +50,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fa41c00f-ad2f-427d-9416-e5537f59304e"
+      }
     }
   }
 }

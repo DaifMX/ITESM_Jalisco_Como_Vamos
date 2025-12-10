@@ -1,29 +1,116 @@
-import { Link } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { useState } from "react";
+import { useRouter } from "expo-router";
+import useSWR from 'swr';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ScrollView, View } from "react-native";
 
-export default function ModalScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title">This is a modal</ThemedText>
-      <Link href="/" dismissTo style={styles.link}>
-        <ThemedText type="link">Go to home screen</ThemedText>
-      </Link>
-    </ThemedView>
-  );
+import { authClient } from "@/lib/auth-client";
+import { fetcher } from "@/lib/axios";
+import { useAvatarNavigation } from "@/hooks/useAvatarNavigation";
+
+import { AvatarSection } from "@/components/avatar-section";
+
+import { Footer } from "@/components/footer";
+
+import { Input, InputSlot, InputIcon, InputField } from '@/components/ui/input';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { VStack } from "@/components/ui/vstack";
+
+import { SearchIcon } from "lucide-react-native";
+import { HomeElementCard } from "@/components/home-element-card";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export type Session = typeof authClient.$Infer.Session;
+
+export default function Home() {
+    const session = authClient.useSession();
+    const { handleMyAccount, handleInfo, handleSignIn, handleSignOut } = useAvatarNavigation();
+
+    const [searchFocused, setSearchFocused] = useState(false);
+    const [searchBarVal, setSearchBarVal] = useState("");
+
+    return (
+        <SafeAreaView className="flex-1 bg-white">
+            <ScrollView
+                className="flex-1 bg-white"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ padding: 32 }}
+            >
+                <View className="flex flex-col gap-8">
+                    <View className="flex flex-row justify-between">
+                        <ThemedText type="title">Inicio</ThemedText>
+                        <View className="">
+                            <AvatarSection
+                                user={session.data?.user}
+                                handleMyAccount={handleMyAccount}
+                                handleInfo={handleInfo}
+                                handleSignIn={handleSignIn}
+                                handleSignOut={handleSignOut}
+                            />
+                        </View>
+                    </View>
+                    <ThemedView lightColor="transparent" darkColor="transparent">
+                        <View className="gap-4">
+                            <View>
+                                <Input className={`h-14 rounded-[10px] bg-[#F5F5F5] border ${searchFocused ? 'border-black' : 'border-transparent'}`}>
+                                    <InputSlot className="pl-4">
+                                        <InputIcon as={SearchIcon} />
+                                    </InputSlot>
+                                    <InputField
+                                        placeholder="Buscar"
+                                        value={searchBarVal}
+                                        onChangeText={setSearchBarVal}
+                                        onFocus={() => setSearchFocused(true)}
+                                        onBlur={() => setSearchFocused(false)}
+                                    />
+                                </Input>
+                            </View>
+                        </View>
+                    </ThemedView>
+
+                    {/* Categories */}
+                    <VStack space="md">
+                        <CategoryList searchQuery={searchBarVal} />
+                    </VStack>
+                </View>
+            </ScrollView>
+            <Footer />
+        </SafeAreaView>
+    );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-});
+const CategoryList = ({ searchQuery }: { searchQuery: string }) => {
+    const router = useRouter();
+
+    const { data, error, isLoading } = useSWR('/api/category', fetcher);
+
+    if (error) return <ThemedText className="text-red-500">Error</ThemedText>
+
+    if (isLoading) return <ThemedText>Cargando...</ThemedText>
+
+    // Filtrar categorías basado en la búsqueda
+    const filteredData = data?.filter((c: any) => 
+        c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Mostrar mensaje si no hay resultados
+    if (filteredData?.length === 0) {
+        return <ThemedText className="text-gray-500 text-center">No se encontraron categorías</ThemedText>
+    }
+
+    return (
+        filteredData?.map((c: any) => {
+            return (
+                <HomeElementCard
+                    key={c.id}
+                    onPress={() => router.push(`/questions?categoryId=${c.id}`)}
+                    text={c.name}
+                    bgColor={c.color ?? '#000000'}
+                    color='white'
+                    icon={c.icon ? c.icon : 'Landmark'}
+                />
+            );
+        })
+    );
+};

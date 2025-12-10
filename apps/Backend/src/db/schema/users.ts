@@ -1,4 +1,7 @@
+import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+
+import { accounts, comments, sessions, twoFactors  } from "@/db/schema";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -12,7 +15,15 @@ export const users = pgTable("users", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   role: text("role"),
+  twoFactorEnabled: boolean("twoFactorEnabled").default(false),
   banned: boolean("banned").default(false),
   banReason: text("banReason"),
   banExpires: timestamp("banExpires"),
 });
+
+export const userRelations = relations(users, ({ many }) => ({
+  sessions: many(sessions),
+  accounts: many(accounts),
+  twoFactors: many(twoFactors),
+  comments: many(comments)
+}));
